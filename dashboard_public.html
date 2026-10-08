@@ -1,0 +1,3500 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>AI 벤더 도입 평가 대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #F8F6F1;
+      --bg-warm: #F2EFE8;
+      --text-primary: #1A2332;
+      --text-secondary: #4A5568;
+      --text-muted: #6B7280;
+      --amber: #D97706;
+      --amber-border: #F59E0B;
+      --amber-light: #FFF9EB;
+      --terracotta: #D97757;
+      --terracotta-bg: #FEF2F2;
+      --green-bg: #F0FDF4;
+      --neutral-bg: #FEFCE8;
+      --slate: #94A3B8;
+      --divider: #E2DDD6;
+      --card-bg: #FFFFFF;
+      --font-serif: 'DM Serif Display', Georgia, serif;
+      --font-sans: 'Noto Sans KR', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--amber-border);
+      outline-offset: 2px;
+    }
+
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    section {
+      padding: 56px 0;
+      border-bottom: 1px solid var(--divider);
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--slate);
+      margin-bottom: 6px;
+    }
+
+    .section-title {
+      font-family: var(--font-sans);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 28px;
+    }
+
+    /* ===== HEADER ===== */
+    #section-header {
+      background: var(--text-primary);
+      padding: 15px 0;
+      border-bottom: none;
+    }
+
+    .header-eyebrow {
+
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--amber-border);
+      margin-bottom: 14px;
+    }
+
+    .header-title {
+      font-size: 28px;
+      color: #FFFFFF;
+      line-height: 1.3;
+      margin-bottom: 28px;
+    }
+
+    .header-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      padding: 10px 16px;
+    }
+
+    .badge-num {
+      font-size: 24px;
+      color: var(--amber-border);
+      line-height: 1;
+    }
+
+    .badge-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.4;
+    }
+
+    .header-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 16px;
+    }
+
+    /* ===== SCORE CARDS ===== */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .score-card {
+      background: var(--card-bg);
+      border: 1px solid var(--divider);
+      border-radius: 8px;
+      padding: 28px 24px 24px;
+    }
+
+    .score-card.claude {
+      background: var(--amber-light);
+      border-top: 4px solid var(--amber-border);
+    }
+
+    .vendor-rank {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--slate);
+      margin-bottom: 6px;
+    }
+
+    .score-card.claude .vendor-rank { color: var(--amber); }
+
+    .vendor-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+    }
+
+    .score-num {
+      font-size: 56px;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .score-card.claude .score-num {
+      font-size: 67px;
+    }
+
+    .score-max {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      margin-top: 2px;
+    }
+
+    .score-tagline {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      padding-top: 14px;
+      border-top: 1px solid var(--divider);
+    }
+
+    .score-card.claude .score-tagline {
+      border-top-color: rgba(217,119,6,0.2);
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    /* ===== MATRIX ===== */
+    .matrix-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .matrix-table {
+      width: 100%;
+      min-width: 580px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .matrix-table th {
+      font-weight: 700;
+      padding: 10px 18px;
+      text-align: center;
+      border-bottom: 2px solid var(--divider);
+      font-size: 13px;
+    }
+
+    .matrix-table th:first-child { text-align: left; }
+    .matrix-table tbody th:nth-child(2) { text-align: left; }
+
+    .matrix-table th.claude-col {
+      color: var(--amber);
+      background: var(--amber-light);
+    }
+
+    .matrix-table td {
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--divider);
+      /* text-align: center; */
+    }
+
+    .matrix-table td:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+
+    .matrix-table tbody tr:hover td { background: var(--bg-warm); }
+    .matrix-table td.claude-col { background: rgba(255,249,235,0.6); }
+    .matrix-table tbody tr:hover td.claude-col { background: rgba(255,249,235,0.9); }
+
+    .matrix-table th.group-col {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg-subtle, #f8f9fa);
+      white-space: nowrap;
+      vertical-align: middle;
+      border-right: 2px solid var(--divider);
+      min-width: 68px;
+      line-height: 1.6;
+    }
+
+    .cell-badge {
+      border-radius: 4px;
+      padding: 2px 10px;
+      display: inline-block;
+      font-weight: 700;
+    }
+
+    .cell-met   { background: var(--green-bg);      color: #166534; }
+    .cell-partial { background: var(--neutral-bg);  color: #92400E; }
+    .cell-not   { background: var(--terracotta-bg); color: #991B1B; }
+
+    .total-row td {
+      font-weight: 700;
+      border-top: 2px solid var(--divider);
+      background: var(--bg-warm);
+    }
+
+    .total-row td.claude-col {
+      color: var(--amber);
+      background: var(--amber-light);
+      font-size: 15px;
+    }
+
+    .matrix-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    /* ===== RADAR PANEL ===== */
+    .radar-panel { display: none; }
+    .radar-panel.active { display: block; }
+
+    .radar-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .radar-chart-container {
+      position: relative;
+      height: 380px;
+    }
+
+    .radar-sidebar {}
+
+    .radar-insight {
+      background: var(--amber-light);
+      border-left: 3px solid var(--amber-border);
+      border-radius: 0 6px 6px 0;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+    }
+
+    .radar-insight strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--amber);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .radar-insight p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .radar-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .radar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 4px;
+      margin: -5px -8px;
+      transition: opacity 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    .radar-legend-item:hover { background: var(--bg-warm); }
+    .radar-legend-item.vendor-selected { font-weight: 700; background: var(--bg-warm); }
+    .radar-legend-item.vendor-dimmed { opacity: 0.3; }
+
+    .radar-legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ===== SCENARIO CARDS ===== */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .scenario-card {
+      background: var(--card-bg);
+      border: 1px solid var(--divider);
+      border-radius: 8px;
+      padding: 24px;
+    }
+
+    .scenario-card.claude {
+      border-left: 4px solid var(--amber-border);
+    }
+
+    .scenario-vendor {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--slate);
+      margin-bottom: 5px;
+    }
+
+    .scenario-card.claude .scenario-vendor { color: var(--amber); }
+
+    .scenario-title {
+      font-size: 16px;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .scenario-req-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .req-badge-primary {
+      background: var(--amber-light);
+      border: 1px solid rgba(217,119,6,0.3);
+      color: var(--amber);
+    }
+
+    .req-badge-secondary {
+      background: #F5F5F4;
+      border: 1px solid var(--divider);
+      color: var(--text-muted);
+    }
+
+    .scenario-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-top: 14px;
+      margin-bottom: 6px;
+    }
+
+    .scenario-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .scenario-list li {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      padding-left: 14px;
+      position: relative;
+    }
+
+    .scenario-list li::before {
+      content: '·';
+      position: absolute;
+      left: 0;
+      color: var(--slate);
+    }
+
+    .scenario-list.limit li::before { color: var(--terracotta); }
+
+    /* ===== SCENARIO CATEGORY CHIPS ===== */
+    .scenario-cats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+
+    .cat-chip {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    .cat-chip.cat-met { background: var(--green-bg); color: #166534; }
+    .cat-chip.cat-not { background: #F5F5F4; color: var(--text-muted); }
+
+    /* ===== REFERENCE EVAL ===== */
+    .refrence-eval {
+      grid-column: 1 / -1;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.6;
+      padding: 10px 0 0;
+      border-top: 1px dashed var(--divider);
+    }
+
+    /* ===== FOOTER ===== */
+    .dashboard-footer {
+      padding: 28px 0;
+      text-align: center;
+      font-size: 11px;
+      color: var(--slate);
+    }
+
+    /* ===== SECTIONS SPLIT LAYOUT ===== */
+    .sections-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 1440px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .sections-split::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100vw;
+      height: 1px;
+      background: var(--divider);
+    }
+
+    .sections-split > section {
+      border-bottom: none;
+      border-right: 1px solid var(--divider);
+    }
+
+    .sections-split > section:last-child {
+      border-right: none;
+    }
+
+    .sections-split .container {
+      max-width: none;
+      padding: 0 32px;
+    }
+
+    .sections-split .matrix-table {
+      min-width: 500px;
+    }
+
+    .sections-split .radar-layout {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .sections-split .radar-chart-container {
+      height: 300px;
+    }
+
+    /* ===== CELL TOOLTIP (JS-driven) ===== */
+    #smart-tooltip {
+      position: fixed;
+      background: var(--text-primary);
+      color: #fff;
+      padding: 9px 13px;
+      border-radius: 6px;
+      font-size: 11px;
+      line-height: 1.6;
+      width: 240px;
+      text-align: left;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      white-space: normal;
+      word-break: keep-all;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #smart-tooltip.visible { opacity: 1; }
+
+    #smart-tooltip::before {
+      content: '';
+      position: absolute;
+      border: 6px solid transparent;
+    }
+    #smart-tooltip[data-placement="top"]::before {
+      top: 100%;
+      left: var(--arrow-left, 50%);
+      transform: translateX(-50%);
+      border-top-color: var(--text-primary);
+    }
+    #smart-tooltip[data-placement="bottom"]::before {
+      bottom: 100%;
+      left: var(--arrow-left, 50%);
+      transform: translateX(-50%);
+      border-bottom-color: var(--text-primary);
+    }
+
+    /* ===== CHALLENGE SIDE PANEL ===== */
+    #challenge-panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.2);
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #challenge-panel-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #challenge-panel {
+      position: fixed;
+      top: 0;
+      right: -750px;
+      width: 750px;
+      height: 100vh;
+      background: var(--card-bg);
+      border-left: 1px solid var(--divider);
+      box-shadow: -4px 0 24px rgba(0,0,0,0.1);
+      z-index: 1000;
+      transition: right 0.3s ease;
+      overflow-y: auto;
+      padding: 32px 28px;
+    }
+    #challenge-panel.open { right: 0; }
+    .challenge-panel-close {
+      background: none;
+      border: 1px solid var(--divider);
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .challenge-panel-close:hover { background: var(--bg-warm); color: var(--text-primary); }
+    .challenge-panel-section {
+      margin-bottom: 24px;
+    }
+    .challenge-panel-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .challenge-panel-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .challenge-panel-items li {
+      display: flex;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .challenge-panel-items li::before {
+      content: '→';
+      color: var(--amber);
+      flex-shrink: 0;
+      font-weight: 700;
+    }
+    .challenge-card-clickable {
+      cursor: pointer;
+      transition: box-shadow 0.15s, transform 0.1s;
+    }
+
+    /* ===== CATEGORY DETAIL MODAL ===== */
+    .category-clickable {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .category-clickable:hover { background: rgba(217,119,6,0.07); }
+    .category-clickable:focus-visible { outline: 2px solid var(--amber); outline-offset: -2px; }
+
+    #cat-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    #cat-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    #cat-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(900px, 94vw);
+      max-height: 84vh;
+      background: var(--card-bg);
+      border: 1px solid var(--divider);
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      z-index: 1000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #cat-modal.open {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      pointer-events: auto;
+    }
+    #cat-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--divider);
+      flex-shrink: 0;
+    }
+    #cat-modal-title {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    #cat-modal-body {
+      overflow-y: auto;
+      padding: 20px 24px 24px;
+      flex: 1;
+    }
+    .cat-section-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 20px 0 8px;
+    }
+    .cat-section-heading:first-child { margin-top: 0; }
+    .cat-detail-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12.5px;
+      margin-bottom: 4px;
+    }
+    .cat-detail-table th,
+    .cat-detail-table td {
+      padding: 6px 8px;
+      border: 1px solid var(--divider);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    .cat-detail-table thead th {
+      background: var(--bg-warm);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .cat-detail-table .col-no { width: 36px; text-align: center; color: var(--text-muted); font-size: 11px; }
+    .cat-detail-table .col-score { width: 56px; text-align: center; }
+    .cat-detail-table .col-claude { background: rgba(217,119,6,0.04); }
+    .cat-detail-table .subtotal-row td,
+    .cat-detail-table .subtotal-row th {
+      background: rgba(217,119,6,0.06);
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+    .cat-detail-table .total-row td,
+    .cat-detail-table .total-row th {
+      background: var(--bg-warm);
+      font-weight: 700;
+      font-size: 12.5px;
+    }
+    #process-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 999; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    #process-modal-overlay.open { opacity: 1; pointer-events: all; }
+    #process-modal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(960px, 96vw);
+      max-height: 88vh;
+      background: var(--card-bg);
+      border: 1px solid var(--divider);
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      z-index: 1000; overflow: hidden;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    #process-modal.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+    #process-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 24px; border-bottom: 1px solid var(--divider); flex-shrink: 0;
+    }
+    #process-modal-body { overflow-y: auto; padding: 20px 24px 24px; flex: 1; }
+
+    .challenge-card-clickable:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+      transform: translateY(-2px);
+    }
+    .challenge-card-clickable:focus-visible {
+      outline: 2px solid var(--amber-border);
+      outline-offset: 2px;
+    }
+    .challenge-hint {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: var(--slate);
+      margin-top: 10px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1199px) {
+      .score-grid { grid-template-columns: repeat(2, 1fr); }
+      .scenario-grid { grid-template-columns: repeat(2, 1fr); }
+      .radar-layout { grid-template-columns: 1fr; }
+      .radar-chart-container { height: 300px; }
+      .sections-split { grid-template-columns: 1fr; }
+      .sections-split > section { border-right: none; border-bottom: 1px solid var(--divider); }
+    }
+
+    @media (max-width: 767px) {
+      .container { padding: 0 20px; }
+      section { padding: 40px 0; }
+      .score-grid { grid-template-columns: repeat(2, 1fr); }
+      .score-num { font-size: 40px; }
+      .score-card.claude .score-num { font-size: 48px; }
+      .scenario-grid { grid-template-columns: 1fr; }
+      .header-title { font-size: 22px; }
+      .header-badges { flex-direction: column; }
+      .radar-chart-container { height: 260px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+
+    @media print {
+      body { background: white; }
+      .score-card, .scenario-card { break-inside: avoid; }
+      .no-print { display: none; }
+      .container { max-width: 100%; padding: 0 15mm; }
+    }
+
+    /* ===== SECTION 07: Integrated Process Flow ===== */
+    #section-process {
+      background: linear-gradient(to bottom, var(--bg), var(--bg-warm));
+    }
+
+    .process-scroll-wrapper {
+      overflow-x: auto;
+      padding: 20px 24px 20px;
+      margin-bottom: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--divider);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(26,35,50,0.06);
+    }
+
+    .process-inner {
+      min-width: 960px;
+    }
+
+    .process-stepper {
+      display: flex;
+      align-items: flex-start;
+      padding: 20px 0 8px;
+      position: relative;
+    }
+
+    .process-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      text-align: center;
+    }
+
+    .process-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 17px;
+      left: 50%;
+      width: 100%;
+      height: 2px;
+      background: var(--divider);
+      z-index: 0;
+    }
+
+    .step-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+      position: relative;
+      z-index: 1;
+      border: 2px solid;
+      flex-shrink: 0;
+    }
+
+    .step-circle.zone-start {
+      background: #F1F5F9;
+      border-color: #94A3B8;
+      color: #475569;
+    }
+
+    .step-circle.zone-internal {
+      background: #EFF6FF;
+      border-color: #93C5FD;
+      color: #1D4ED8;
+    }
+
+    .step-circle.zone-claude {
+      background: var(--amber-light);
+      border-color: var(--amber-border);
+      color: var(--amber);
+    }
+
+    .step-label {
+      margin-top: 7px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      max-width: 72px;
+      word-break: keep-all;
+    }
+
+    .step-tag {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      white-space: nowrap;
+      line-height: 1.6;
+    }
+
+    .step-tag.t01 { background: #FEF2F2; color: var(--terracotta); border: 1px solid #FECACA; }
+    .step-tag.t02 { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+    .step-tag.t03 { background: var(--neutral-bg); color: #D97706; border: 1px solid #FDE68A; }
+    .step-tag.tclaude { background: var(--amber-light); color: var(--amber); border: 1px solid var(--amber-border); }
+    .step-tag.t0203 { background: #F5F3FF; color: #6D28D9; border: 1px solid #C4B5FD; }
+
+    /* Audit band rows */
+    .audit-bands {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .audit-band-row {
+      display: flex;
+      align-items: stretch;
+      height: 26px;
+    }
+
+    .band-spacer {
+      flex-shrink: 0;
+    }
+
+    .audit-band {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .audit-band.internal-audit {
+      background: rgba(59, 130, 246, 0.07);
+      border: 1.5px solid rgba(59, 130, 246, 0.35);
+      color: #1D4ED8;
+    }
+
+    .audit-band.claude-compliance {
+      background: rgba(217, 119, 6, 0.07);
+      border: 1.5px solid rgba(217, 119, 6, 0.35);
+      color: var(--amber);
+    }
+
+    .process-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--divider);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid;
+      flex-shrink: 0;
+    }
+
+    .legend-band {
+      width: 24px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 767px) {
+      .process-legend { gap: 8px 14px; }
+    }
+
+    /* ===== UTILITY ===== */
+    .subsection-label {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #000000;
+      margin-bottom: 14px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ===== SECTION 1: 헤더 ===== -->
+  <header id="section-header" aria-labelledby="header-title">
+    <div class="container">
+      <p class="header-eyebrow">Enterprise AI Vendor Evaluation · 2026.05</p>
+      <h1 class="header-title" id="header-title">AI 도입 벤더<br>비교 평가 보고서</h1>
+      <div class="header-badges" role="list" aria-label="평가 규모 지표">
+        <div class="badge" role="listitem">
+          <span class="badge-num" aria-hidden="true">98</span>
+          <span class="badge-label">평가 항목</span>
+          <span class="sr-only">평가 항목 98개, 항목 평가</span>
+        </div>
+        <div class="badge" role="listitem">
+          <span class="badge-num" aria-hidden="true">6</span>
+          <span class="badge-label">평가 영역</span>
+          <span class="sr-only">평가 영역 6개</span>
+        </div>
+        <div class="badge" role="listitem">
+          <span class="badge-num" aria-hidden="true">4</span>
+          <span class="badge-label">비교 벤더</span>
+          <span class="sr-only">비교 벤더 4개</span>
+        </div>
+        <div class="badge" role="listitem">
+          <span class="badge-num" aria-hidden="true">5</span>
+          <span class="badge-label">점수 척도<br><span style="font-size:10px;opacity:.7">5점 만점</span></span>
+          <span class="sr-only">5점 만점 척도</span>
+        </div>
+      </div>
+      <p class="header-meta">출처: 내부 평가 보고서 · 98개 항목 평가 · 경영 의사결정 참고용</p>
+    </div>
+  </header>
+
+  <!-- ===== SECTION 0: 보고서 개요 ===== -->
+  <section id="section-overview" aria-labelledby="overview-title">
+    <div class="container">
+      <p class="section-label">00 — Overview</p>
+      <h2 class="section-title" id="overview-title">기업용 AI 도입 개요</h2>
+
+      <!-- AI 기업용 기능 3영역 -->
+      <p class="subsection-label" style="margin-top:32px; border-left:3px solid var(--slate); padding-left:8px;">AI 기업용 기능 영역 <span style="font-weight: 100; font-size: 12px;">- 최근 기업용 AI는 다음 3가지 영역으로 구분되며, 세 영역을 모두 포괄할 수 있어야 합니다.</span></p>
+      <div class="matrix-wrapper" style="margin-bottom:28px;" role="region" aria-label="AI 기업용 기능 3영역 표">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th scope="col">영역</th>
+              <th scope="col">주요 기능</th>
+              <th scope="col">기업 활용</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700;">AI 질의응답 (Chat)</td>
+              <td>질의응답, 문서 작성, 자료 요약, 번역 등 대화 기반 업무 지원</td>
+              <td>정보 탐색 및 문서 작업 생산성 향상</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">AI 협업 (Cowork)</td>
+              <td>다단계 업무를 AI가 자율적으로 수행 (메일 정리, 일정 조율, 보고서 작성 등)</td>
+              <td>반복·정형 행정 업무의 자동화</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">AI 개발 (Code)</td>
+              <td>소프트웨어 및 시스템 개발 작업</td>
+              <td>개발 생산성 및 산출물 품질 제고</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4개사 미팅 경위 -->
+      <p class="subsection-label" style="margin-top:32px; border-left:3px solid var(--slate); padding-left:8px;">벤더 미팅 <span style="font-weight: 100; font-size: 12px;">- 적합한 AI 도입 방향을 검토하기 위해, 글로벌 AI 3사 및 AI 센터와 다음과 같이 검토를 진행하였습니다.</span></p>
+      <div class="matrix-wrapper" style="margin-bottom:28px;" role="region" aria-label="벤더 미팅 경위 표">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th scope="col">벤더</th>
+              <!-- <th scope="col">미팅 일자</th> -->
+              <th scope="col">주요 논의사항</th>
+              <!-- <th scope="col">국내 구축 파트너</th> -->
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700;">OpenAI GPT</td>
+              <td>
+                - ChatGPT Enterprise 소개 및 세부 관리기능, 보안 요건 검토<br/>
+                - 삼성SDS 도입사례 설명 (목적 및 방향성, 암호화문서 관리 및 활용방안 등)<br/>
+                - 당사 도입 조건, 비용 산정 및 PoC 방안 제안
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">Microsoft Copilot</td>
+              <td>
+                - M365 신규 통합 상품(E7) 사전 소개 및 기능, 비용 설명, 출시 일정(5월) 안내<br/>
+                - Copilot Cowork 시연 및 질의응답<br/>
+                - 그룹 M365 체제에서 도입시 특징 설명 (보안 등 관리체계의 장점 강조)
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">Anthropic Claude</td>
+              <td>
+                - Claude Enterprise 소개, 타 AI와의 차이점 설명<br/>
+                - 국내 도입현황 및 서비스 영업상황 공유<br/>
+                - 표준 요금체계 설명, 당사 도입 방안 논의 및 의견 제시 
+                (소규모 계정으로 시험운영 후 해당 결과에 기반한 전체도입 협의방식)
+              </td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">당사 AI 포털</td>
+              <td>
+                - 임직원용 AI 포탈 구축 및 실행형 Agent 기반 체계 기획<br/>
+                - 현재 자체 MBO 및 구축일정에 따라 5월까지 개발진행중
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 3사 기능 비교표 -->
+      <p class="subsection-label" style="margin-top:32px; border-left:3px solid var(--slate); padding-left:8px;">벤더별 지향점 · 특장점</p>
+      <div class="matrix-wrapper" style="margin-bottom:28px;" role="region" aria-label="3사 기능 비교표">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th scope="col" width="10%" >구분</th>
+              <th scope="col" width="22%">OpenAI GPT</th>
+              <th scope="col" width="22%">Microsoft Copilot</th>
+              <th scope="col" width="22%">Anthropic Claude</th>
+              <th scope="col" width="22%">당사 AI 포털</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700;">방향성</td>
+              <td>빠른 모델 혁신, 대중적으로 가장 친숙한 AI</td>
+              <td>기존 업무 환경(M365)에 AI 통합</td>
+              <td>안전성·신뢰성 중심 고성능·고신뢰 AI</td>
+              <td>개인·기업 맞춤 친화적 AI 업무 환경 제공</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">핵심 특징</td>
+              <td>자체 LLM 보유 (GPT, Sora 등)<br/>대중적으로 가장 친숙한 AI</td>
+              <td>자체 LLM 없음<br/>멀티모델 연동 제공<br/>MS 오피스 환경과 통합된 답변 우수</td>
+              <td>자체 LLM 보유<br/>강력한 글 읽기·쓰기 성능 <br/>(최대 100만 토큰 인식 — 업계 최고치)<br/>업계 전문가 선호 모델 (Claude Code 등)</td>
+              <td>자체 LLM 없음<br/>멀티모델 연동<br/>개인·기업 맞춤 친화적 AI 업무 환경 제공</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">AI 질의응답<br/>(Chat)</td>
+              <td>인지도·친숙도 우수</td>
+              <td>인지도·친숙도 통상 수준, 단 오피스 환경과 통합된 답변 우수</td>
+              <td>글 읽기·쓰기 우수 (최대 100만 토큰 인식)</td>
+              <td>통상 수준</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">AI 협업<br/>(Cowork)</td>
+              <td>ChatGPT Agent (출시 예정)</td>
+              <td>Anthropic 기술 적용</td>
+              <td>원천 기술 보유 (1월 출시)</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">AI 개발<br/>(Code)</td>
+              <td>Codex</td>
+              <td>GitHub Copilot — 별도 외부 라이센스 예정</td>
+              <td>Claude Code — 현재 글로벌 표준</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== SECTION 1.5: 평가 기준 및 방법 ===== -->
+  <section id="section-criteria" aria-labelledby="criteria-title">
+    <div class="container">
+      <p class="section-label">01 — Evaluation Criteria</p>
+      <h2 class="section-title" id="criteria-title">평가 기준 및 방법</h2>
+      <p class="subsection-label" style="margin-top:-20px; margin-bottom:25px; border-left:3px solid var(--slate); padding-left:8px;">
+        일반·추가·당사 <strong style="color:var(--text-primary);">3가지 고려사항</strong>을 협의하여,
+        6개 평가항목 카테고리</strong>를 도출.
+        <br/>
+        총 <strong style="color:var(--text-primary);">98개</strong> 평가항목 구성(출처: AX 팀) <span style="font-weight: 100; font-size: 12px;"> — 아래 '평가 방법'을 기준으로 평가 진행.</span>
+      </p>
+
+      <!-- 6개 카테고리 선정 이유 표 -->
+      <p class="subsection-label" style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">
+        6개 평가 항목 도출 이유 및 핵심 기준
+      </p>
+      <!-- 도출 기준 3개 카드 -->
+      <div style="background:var(--bg-warm); border:1px solid var(--divider); border-radius:10px; padding:16px; margin-bottom:20px;">
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;" role="list" aria-label="평가 항목 도출 기준">
+          <div role="listitem" style="background:var(--bg); border:1px solid var(--divider); border-top:3px solid var(--slate); border-radius:8px; padding:16px 18px;">
+            <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--slate); margin-bottom:6px;">일반 고려사항</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">AI 도입 시 업종·규모 무관하게 공통으로 검토하는 항목</p>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <span style="font-size:12px; color:var(--text-primary); margin-left: 2px;">· AI 성능</span>
+              <span style="font-size:12px; color:var(--text-primary);">· 보안/거버넌스</span>
+              <span style="font-size:12px; color:var(--text-primary);">· 기간계/시스템 연동</span>
+              <span style="font-size:12px; color:var(--text-primary);">· 비용 </span>
+            </div>
+          </div>
+          <div role="listitem" style="background:var(--bg); border:1px solid var(--divider); border-top:3px solid var(--slate); border-radius:8px; padding:16px 18px;">
+            <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--slate); margin-bottom:6px;">추가 고려사항</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">일반 고려사항 외, 전사 확산을 위해 별도로 반영한 항목</p>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <span style="font-size:12px; color:var(--text-primary);">· 비개발자 사용성</span>
+            </div>
+          </div>
+          <div role="listitem" style="background:var(--bg); border:1px solid var(--divider); border-top:3px solid var(--slate); border-radius:8px; padding:16px 18px;">
+            <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--slate); margin-bottom:6px;">당사 고려사항</p>
+            <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px; line-height:1.5;">당사 개발·운영 도메인에 특화된 요건</p>
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <span style="font-size:12px; color:var(--text-primary);">· Code Assistant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+
+      <div class="matrix-wrapper" role="region" aria-label="6개 평가 항목 선정 이유 표">
+        <table class="matrix-table" style="margin-bottom: 10px;">
+          <thead>
+            <tr>
+              <th scope="col" style="width:150px;">평가 항목</th>
+              <th scope="col" style="width:100px; text-align:center;">가중치</th>
+              <th scope="col">도출 이유</th>
+              <th scope="col">항목 핵심 기준</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700;">AI 성능</td>
+              <td style="text-align:center; font-weight:700;">20%</td>
+              <td>업무 자동화·문서 처리 품질을 결정하는 핵심 역량</td>
+              <td>에이전트 설계에 따른 추론 정확도, 대용량 문서 처리 한계(컨텍스트 창)</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">보안/거버넌스</td>
+              <td style="text-align:center; font-weight:700;">30%</td>
+              <td>사내 M365 기반 문서 보안 요건 충족</td>
+              <td>DLP 기능 수준, 문서 ACL(MIP/DRM) 통제, 감사로그 제공 여부</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">기간계/시스템 연동</td>
+              <td style="text-align:center; font-weight:700;">10%</td>
+              <td>사내 ERP·그룹웨어 등 레거시 시스템과의 연동 가능성</td>
+              <td>API/MCP 지원, SSO 연동, Action 실행 여부</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">비개발자 사용성</td>
+              <td style="text-align:center; font-weight:700;">10%</td>
+              <td>비IT 직군의 일상 업무 활용 가능성 — 전사 확산 속도 결정</td>
+              <td>대용량 컨텍스트 분석, 공동 편집, 로컬 Office 파일 작업</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700;">Code Assistant</td>
+              <td style="text-align:center; font-weight:700;">30%</td>
+              <td>당사 개발 지원 핵심 요건 — 개발 생산성 향상 기대</td>
+              <td>IDE 연동(VS Code 등), CLI 지원, 코드 생성·리뷰 품질</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:var(--text-muted);">비용</td>
+              <td style="text-align:center; font-weight:700; color:var(--text-muted);">0%</td>
+              <td colspan="2" style="color:var(--text-muted); font-style:italic;">도입 전 실제 사용량 측정 불가 — 평가에서 제외, 운영 안정화 후 재산정 예정</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="background:var(--amber-light); border-left:4px solid var(--amber-border); border-radius:0 8px 8px 0; padding:16px 20px; margin-bottom:20px;" aria-label="가중치 산정 배경 설명">
+          <p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--amber); margin-bottom:10px;">가중치 산정 배경</p>
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.7; margin:0;">
+            <strong>보안/거버넌스(30%)</strong>는 M365 기반으로 업무가 진행됨에 따라 <em>필수 조건</em>이며,
+            <strong>Code Assistant(30%)</strong>는 당사 개발 지원이라는 <em>핵심 도입 목적</em>에 직결됩니다.
+            두 항목 합산 60%로 평가 과반을 차지합니다.
+            <strong>AI 성능(20%)</strong>은 실제 업무 활용 가치를 결정하는 핵심 역량입니다.
+            <strong>기간계 연동·비개발자 사용성(각 10%)</strong>은 전사 확산 속도를 좌우하는 보조 지표로, 운영 안정화 이후 점수 비중을 조정 검토 예정입니다.
+            <strong>비용(0%)</strong>은 도입 전 실사용량 측정이 불가하여 이번 평가에서 제외했습니다.
+          </p>
+          <!-- <ul>
+          <li style="font-size:13px; color:var(--text-secondary); line-height:1.7; margin:0;">
+            <strong>보안/거버넌스(30%)</strong>는 M365 기반으로 업무가 진행됨에 따라 <em>필수 조건
+            </li>
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.7; margin:0;">
+            <strong>Code Assistant(30%)</strong>는 당사 개발 지원이라는 <em>핵심 도입 목적</em>에 직결
+          </p>
+          <p style="font-size:13px; color:var(--text-secondary); line-height:1.7; margin:0;">
+            <strong>AI 성능(20%)</strong>은 실제 업무 활용 가치를 결정하는 핵심 역량
+          </p>
+          </ul> -->
+        </div>
+      </div>
+
+        <!-- 평가 방식 3개 카드 -->
+      <p class="subsection-label" style="font-size:12px; color:var(--text-muted); margin-top:10px;">
+        평가 방법 - Claude Code 에이전트 구성 3단계로 평가 진행
+      </p>
+      <div aria-label="평가 방식 안내" style="margin-bottom:28px;">
+
+        <!-- 타임라인 헤더 (3단계) -->
+        <div style="position:relative; margin-bottom:24px;">
+          <!-- 연결선: 마커 중심을 잇는 그라디언트 -->
+          <div style="position:absolute; top:28px; left:16.7%; right:16.7%; height:2px;
+            background:linear-gradient(90deg, #CBD5E1 50%, #A5B4FC 50%);
+            z-index:0;"></div>
+
+          <!-- 3개 마커 그리드 -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; position:relative; z-index:1;">
+
+            <!-- Step 1: Agent 1 · Collector -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:#F1F5F9; border:3px solid #CBD5E1; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:#64748B;">01</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#64748B; margin-bottom:2px;">Agent 1</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">Collector</p>
+                <p style="font-size:11px; color:var(--text-muted);">데이터 수집</p>
+              </div>
+            </div>
+
+            <!-- Step 2: Agent 2 · Scorer -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:var(--amber-light); border:3px solid var(--amber-border); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:var(--amber);">02</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin-bottom:2px;">Agent 2</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">Scorer</p>
+                <p style="font-size:11px; color:var(--text-muted);">점수 산정</p>
+              </div>
+            </div>
+
+            <!-- Step 3: Agent 3 · Reviewer -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:#EEF2FF; border:3px solid #A5B4FC; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:#4B7BF5;">03</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#4B7BF5; margin-bottom:2px;">Agent 3</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">Reviewer</p>
+                <p style="font-size:11px; color:var(--text-muted);">검증 및 보정</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3개 카드 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+
+          <!-- Card 1: Collector -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid #CBD5E1; border-radius:8px; padding:20px;">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#F1F5F9; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#64748B; flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">공식 출처 우선 수집 (docs.anthropic.com 등)</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#F1F5F9; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#64748B; flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">불확실 정보는 <strong>미확인</strong> 표시</p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 2: Scorer -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid var(--amber-border); border-radius:8px; padding:20px;">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--amber-light); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--amber); flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">사실 기반 점수만 부여</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--amber-light); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--amber); flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">확인 불가 항목 → <strong>3점</strong> 처리</p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 3: Reviewer -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid #A5B4FC; border-radius:8px; padding:20px;">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#EEF2FF; border:1px solid #A5B4FC; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#4B7BF5; flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">스코어 일관성 검사</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#EEF2FF; border:1px solid #A5B4FC; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#4B7BF5; flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">이상치 보정</p>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="sections-split">
+
+  <!-- ===== SECTION 3: 핵심 요건 매트릭스 ===== -->
+  <section id="section-matrix" aria-labelledby="matrix-title">
+    <div class="container">
+      <p class="section-label">02 — Category Score Matrix</p>
+      <h2 class="section-title" id="matrix-title">핵심 요건 - 카테고리별 벤더 평균 점수</h2>
+      <div class="matrix-wrapper"
+           role="region"
+           aria-label="핵심 요건 - 카테고리별 벤더 평균 점수 매트릭스 (가로 스크롤 가능)"
+           tabindex="0">
+        <table class="matrix-table">
+          <caption class="sr-only">
+            5개 카테고리에 대한 4개 벤더(OpenAI, Claude, Copilot, AI포털)의 평균 점수 비교.
+            Claude가 AI 성능(4.94)·Code Assistant(4.50) 최고점. 보안/거버넌스는 Copilot(4.55)·AI포털(4.48) 상위.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">구분</th>
+              <th scope="col">카테고리</th>
+              <th scope="col">가중치</th>
+              <th scope="col">OpenAI GPT</th>
+              <th scope="col">Claude</th>
+              <th scope="col">Copilot</th>
+              <th scope="col">AI포털</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="rowgroup" rowspan="4" class="group-col">일반<br>고려사항</th>
+              <th scope="row" class="has-tooltip category-clickable" data-category="ai-performance" tabindex="0" aria-haspopup="dialog" data-tooltip="항목 번호: #32–33, #179–208 (영역 4-1·10·11·12) — 클릭하면 상세 점수 확인">
+                AI 성능 <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(31개)</span>
+                <p class="challenge-hint">점수 보기 →</p>
+              </th>
+              <td>20%</td>
+              <td><span class="cell-badge cell-met">4.61</span></td>
+              <td class="claude-col"><span class="cell-badge cell-met">4.94</span></td>
+              <td><span class="cell-badge cell-partial">3.39</span></td>
+              <td><span class="cell-badge cell-partial">3.03</span></td>
+            </tr>
+            <tr>
+              <th scope="row" class="has-tooltip category-clickable" data-category="security" tabindex="0" aria-haspopup="dialog" data-tooltip="항목 번호: #1–3, #7–11, #13–15, #17–18, #20–22, #148–152, #161–163, #165–166, #174, #176, #178 (영역 1·2·3·5·7·9) — 클릭하면 상세 점수 확인">
+                보안/거버넌스 <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(29개)</span>
+                <p class="challenge-hint">점수 보기 →</p>
+              </th>
+              <td>30%</td>
+              <td><span class="cell-badge cell-partial">3.28</span></td>
+              <td class="claude-col"><span class="cell-badge cell-partial">3.03</span></td>
+              <td><span class="cell-badge cell-met">4.55</span></td>
+              <td><span class="cell-badge cell-met">4.48</span></td>
+            </tr>
+            <tr>
+              <th scope="row" class="has-tooltip category-clickable" data-category="integration" tabindex="0" aria-haspopup="dialog" data-tooltip="항목 번호: #62–63, #75 외, #128, #131, #133 외, #168, #170 외 (영역 4-4·4-5·4-9·8) — 클릭하면 상세 점수 확인">
+                기간계/시스템 연동 <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(8개)</span>
+                <p class="challenge-hint">점수 보기 →</p>
+              </th>
+              <td>10%</td>
+              <td><span class="cell-badge cell-met">4.36</span></td>
+              <td class="claude-col"><span class="cell-badge cell-met">4.26</span></td>
+              <td><span class="cell-badge cell-met">4.43</span></td>
+              <td><span class="cell-badge cell-partial">3.10</span></td>
+            </tr>
+            <tr>
+              <th scope="row">
+                비용 <span style="font-size:11px;font-weight:400;color:var(--text-muted);"></span>
+              </th>
+              <td>0%</td>
+              <td><span>—</span></td>
+              <td><span>—</span></td>
+              <td><span>—</span></td>
+              <td><span>—</span></td>
+            </tr>
+            <tr>
+              <th scope="rowgroup" rowspan="1" class="group-col">추가<br>고려사항</th>
+              <th scope="row" class="has-tooltip category-clickable" data-category="usability" tabindex="0" aria-haspopup="dialog" data-tooltip="항목 번호: #23–25, #27–29, #54, #58, #61, #77, #93–94, #99, #116, #175 (영역 4-1·4-3·4-5·4-6·4-7·4-8·9) — 클릭하면 상세 점수 확인">
+                비개발자 사용성 <span style="font-size:11px;font-weight:400;color:var(--text-muted);"><br>(14개)</span>
+                <p class="challenge-hint">점수 보기 →</p>
+              </th>
+              <td>10%</td>
+              <td><span class="cell-badge cell-partial">3.74</span></td>
+              <td class="claude-col"><span class="cell-badge cell-met">4.31</span></td>
+              <td><span class="cell-badge cell-met">4.35</span></td>
+              <td><span class="cell-badge cell-partial">3.00</span></td>
+            </tr>
+            <tr>
+              <th scope="rowgroup" rowspan="1" class="group-col">당사<br>고려사항</th>
+              <th scope="row" class="has-tooltip category-clickable" data-category="code-assistant" tabindex="0" aria-haspopup="dialog" data-tooltip="항목 번호: #137–139, #141, #143, #145–146, #209–215, #217–218 (영역 4-5·4-10·4-11) — 클릭하면 상세 점수 확인">
+                Code Assistant <span style="font-size:11px;font-weight:400;color:var(--text-muted);">(16개)</span>
+                <p class="challenge-hint">점수 보기 →</p>
+              </th>
+              <td>30%</td>
+              <td><span class="cell-badge cell-partial">3.56</span></td>
+              <td class="claude-col"><span class="cell-badge cell-met">4.50</span></td>
+              <td><span class="cell-badge cell-not">2.00</span></td>
+              <td><span class="cell-badge cell-not">2.07</span></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="total-row">
+              <th scope="row" colspan="2">가중 평균</th>
+              <td>—</td>
+              <td><strong>3.78</strong></td>
+              <td class="claude-col"><strong>4.10</strong></td>
+              <td><strong>3.52</strong></td>
+              <td><strong>3.18</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+       <p style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.7; font-style:italic;">
+          ※ 비용 항목은 평가에서 제외됨 — 도입 초기 단계로 실제 사용량 측정이 불가하여 벤더 간 비용 비교가 현재 시점에서 어렵습니다. 운영 안정화 후 별도 검토 예정.
+        </p>
+
+      <div class="matrix-legend" role="list" aria-label="범례">
+        <span class="legend-item" role="listitem">
+          <span class="cell-badge cell-met" aria-hidden="true">4.0+</span>
+          <span>4.0점 이상 — 상위권</span>
+        </span>
+        <span class="legend-item" role="listitem">
+          <span class="cell-badge cell-partial" aria-hidden="true">3.0~</span>
+          <span>3.0–3.9점 — 중위권</span>
+        </span>
+        <span class="legend-item" role="listitem">
+          <span class="cell-badge cell-not" aria-hidden="true">~2.9</span>
+          <span>3.0점 미만 — 하위권</span>
+        </span>
+      </div>
+
+      <!-- 비용 안내 -->
+      <div style="margin-top:28px; padding-top:20px; border-top:1px solid var(--divider);" aria-label="벤더별 공식 비용 안내">
+        <p class="subsection-label">예상 비용 · Enterprise Pricing (USD · 연간 약정 기준 · 2026.04)</p>
+
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;">
+
+          <!-- OpenAI Enterprise -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:16px;">
+            <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--slate); margin-bottom:10px;">OpenAI GPT · Enterprise</p>
+            <p style="font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:12px;">$33 / 월 <span style="font-size:11px; font-weight:400; color:var(--text-muted);">+ 크레딧 초과 시 별도</span></p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--divider); padding-bottom:7px;">
+                <span style="font-size:11px; color:var(--text-muted);">월 추정 (인당)</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text-primary);">$0-490 <span class="has-tooltip" data-tooltip="vibe-coding 기준 ~15회 교환/일 × 22일 = 330 msg/월 · Codex(Local) GPT-5.x 1~3 credits/msg · 하한 330 credits → 500 내 충족 ($33) · 상한 990 credits → 490 초과 = $490 (내부 추정치)" style="font-size:11px; color:var(--slate); cursor:help; font-weight:400;" tabindex="0" aria-label="계산 근거 보기">ⓘ</span></span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <span style="font-size:11px; color:var(--text-muted);">연 추정 (인당)</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text-secondary);">$0–5,880</span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:var(--text-muted); margin-top:10px; font-style:italic; line-height:1.5;">Codex(Local) GPT-5.x · 1–3 credits/msg · 500 credits/월 포함</p>
+          </div>
+
+          <!-- Claude Enterprise -->
+          <div style="background:var(--amber-light); border:1px solid rgba(217,119,6,0.25); border-radius:8px; padding:16px;">
+            <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin-bottom:10px;">Claude · Enterprise</p>
+            <p style="font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:12px;">좌석 $20 <span style="font-size:11px; font-weight:400; color:var(--text-muted);">+ 토큰 사용량 별도</span></p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid rgba(217,119,6,0.2); padding-bottom:7px;">
+                <span style="font-size:11px; color:var(--text-muted);">월 추정 (인당)</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text-primary);">$70–100 <span class="has-tooltip" data-tooltip="일 50만 토큰 × 22일 · Input 70%: ~$1.05/일 · Output 30%: ~$2.25/일 → 합계 ~$3.3/일 · Claude Sonnet API 단가 적용 (내부 추정치)" style="font-size:11px; color:var(--amber); cursor:help; font-weight:400;" tabindex="0" aria-label="계산 근거 보기">ⓘ</span></span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <span style="font-size:11px; color:var(--text-muted);">연 추정 (인당)</span>
+                <span style="font-size:14px; font-weight:700; color:var(--amber);">$840–1,200</span>
+              </div>
+            </div>
+            <p style="font-size:10px; color:var(--text-muted); margin-top:10px; font-style:italic; line-height:1.5;">22일 × ~50만 토큰/일 기준 · Claude Sonnet API 단가 적용</p>
+          </div>
+
+          <!-- Copilot M365 E7 -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:16px;">
+            <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--slate); margin-bottom:10px;">Microsoft Copilot · M365 E7</p>
+            <p style="font-size:13px; font-weight:700; color:var(--text-primary); margin-bottom:12px;">번들 포함 <span style="font-size:11px; font-weight:400; color:var(--text-muted);">Copilot·Defender·Purview</span></p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:1px solid var(--divider); padding-bottom:7px;">
+                <span style="font-size:11px; color:var(--text-muted);">월 추정 (인당)</span>
+                <span style="font-size:14px; font-weight:700; color:var(--amber);">~$99 <span style="font-size:10px; font-weight:400; color:var(--text-muted);"></span></span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                <span style="font-size:11px; color:var(--text-muted);">연 추정 (인당)</span>
+                <span style="font-size:14px; font-weight:700; color:var(--text-secondary);">~$1,188 <span style="font-size:10px; font-weight:400; color:var(--text-muted);"></span></span>
+              </div>
+            </div>
+            <!-- <p style="font-size:10px; color:var(--text-muted); margin-top:10px; font-style:italic; line-height:1.5;">Copilot·Agent 365·Defender XDR·Purview 포함 번들 · 가격 미확정(예상)</p> -->
+          </div>
+
+        </div>
+
+        <p style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.7; font-style:italic;">
+          ※ Openai(삼성SDS예상비용-2025.12.18기준), Claude/Copilot 공식 공개 가격 기준 (2026.04) · Enterprise 플랜은 계약 규모·조건에 따라 변동 가능 · AI포털(자체)는 내부 구축·운영 비용으로 별도 산정 · Claude 개발자 추정치는 내부 토큰 소모 분석 기준 · 출처: openai.com, claude.ai, microsoft.com/microsoft-365-copilot
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 4: 레이더 차트 ===== -->
+  <section id="section-radar" aria-labelledby="radar-title">
+    <div class="container">
+      <p class="section-label">03 — Category Score Radar</p>
+      <h2 class="section-title" id="radar-title">카테고리별 종합 역량 비교</h2>
+
+      <div role="region" id="panel-main" aria-labelledby="radar-title" class="radar-panel active">
+        <div class="radar-layout">
+          <div>
+            <div class="radar-chart-container">
+              <canvas id="chart-main"
+                role="img"
+                aria-labelledby="label-main"
+                aria-describedby="desc-main"></canvas>
+              <p id="label-main" class="sr-only">카테고리별 종합 역량 레이더 차트</p>
+              <p id="desc-main" class="sr-only">
+                5개 카테고리(AI 성능, 보안/거버넌스, 기간계/시스템 연동, 비개발자 사용성, Code Assistant) 비교.
+                Claude: 4.94, 3.03, 4.26, 4.31, 4.50. OpenAI: 4.61, 3.28, 4.36, 3.74, 3.56.
+                Copilot: 3.39, 4.55, 4.43, 4.35, 2.00. AI포털: 3.03, 4.48, 3.10, 2.67, 2.07.
+              </p>
+            </div>
+          </div>
+          <span class="refrence-eval">카테고리 출처 : 섹션 02 카테고리별 벤더 평균 점수</span>
+          <div class="radar-sidebar">
+            <div class="radar-insight">
+              <strong>인사이트</strong>
+              <p>벤더 항목을 클릭하면 해당 벤더의 분석을 확인할 수 있습니다.</p>
+            </div>
+            <div class="radar-legend" aria-label="차트 범례">
+              <div class="radar-legend-item" data-vendor="claude" role="button" tabindex="0" aria-pressed="false">
+                <span class="radar-legend-dot" style="background:rgba(217,119,6,1);"></span>
+                Claude
+              </div>
+              <div class="radar-legend-item" data-vendor="openai" role="button" tabindex="0" aria-pressed="false">
+                <span class="radar-legend-dot" style="background:rgba(59,130,246,1);"></span>
+                OpenAI GPT
+              </div>
+              <div class="radar-legend-item" data-vendor="copilot" role="button" tabindex="0" aria-pressed="false">
+                <span class="radar-legend-dot" style="background:rgba(16,185,129,1);"></span>
+                Microsoft Copilot
+              </div>
+              <div class="radar-legend-item" data-vendor="aicenter" role="button" tabindex="0" aria-pressed="false">
+                <span class="radar-legend-dot" style="background:rgba(139,92,246,1);"></span>
+                AI포털
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  </div>
+
+  <!-- ===== SECTION 5: 시나리오 카드 ===== -->
+  <section id="section-scenarios" aria-labelledby="scenarios-title">
+    <div class="container">
+      <p class="section-label">04 — Adoption Scenarios</p>
+      <h2 class="section-title" id="scenarios-title">벤더별 평가 결과</h2>
+      <div class="scenario-grid">
+
+        <article class="scenario-card claude" aria-label="Claude 도입 시나리오">
+          <p class="scenario-vendor">Claude · Anthropic</p>
+          <h3 class="scenario-title">균형 잡힌 전사 AI 플랫폼</h3>
+          <span class="scenario-req-badge req-badge-primary" aria-label="5개 카테고리 중 4개 상위권">✓ 4 / 5 카테고리 상위권</span>
+          <div class="scenario-cats" aria-label="카테고리별 상위권 여부 (섹션 02 기준 · 4.0점 이상)">
+            <span class="cat-chip cat-met" title="AI 성능 4.94">AI 성능</span>
+            <span class="cat-chip cat-not" title="보안/거버넌스 3.03">보안/거버넌스</span>
+            <span class="cat-chip cat-met" title="기간계/시스템 연동 4.26">기간계 연동</span>
+            <span class="cat-chip cat-met" title="비개발자 사용성 4.31">비개발자 사용성</span>
+            <span class="cat-chip cat-met" title="Code Assistant 4.50">Code Assistant</span>
+          </div>
+          <p class="scenario-section-label">적합 조건</p>
+          <ul class="scenario-list" aria-label="Claude 적합 조건">
+            <li>전사 범용 AI 어시스턴트 도입</li>
+            <li>대용량 문서 분석·요약 빈번한 환경</li>
+            <li>Code Assistant + 업무 자동화 병행</li>
+          </ul>
+          <p class="scenario-section-label">한계</p>
+          <ul class="scenario-list limit" aria-label="Claude 한계">
+            <li>보안/거버넌스 최하위(3.03) — DLP 1.4점·문서 ACL 2.43점</li>
+          </ul>
+        </article>
+
+        <article class="scenario-card" aria-label="Microsoft Copilot 도입 시나리오">
+          <p class="scenario-vendor">Microsoft Copilot</p>
+          <h3 class="scenario-title">M365 기반 오피스 특화</h3>
+          <span class="scenario-req-badge req-badge-secondary" aria-label="5개 카테고리 중 3개 상위권">✓ 3 / 5 카테고리 상위권</span>
+          <div class="scenario-cats" aria-label="카테고리별 상위권 여부 (섹션 02 기준 · 4.0점 이상)">
+            <span class="cat-chip cat-not" title="AI 성능 3.39">AI 성능</span>
+            <span class="cat-chip cat-met" title="보안/거버넌스 4.55">보안/거버넌스</span>
+            <span class="cat-chip cat-met" title="기간계/시스템 연동 4.43">기간계 연동</span>
+            <span class="cat-chip cat-met" title="비개발자 사용성 4.35">비개발자 사용성</span>
+            <span class="cat-chip cat-not" title="Code Assistant 2.00">Code Assistant</span>
+          </div>
+          <p class="scenario-section-label">적합 조건</p>
+          <ul class="scenario-list" aria-label="Copilot 적합 조건">
+            <li>M365 Teams·Outlook 중심 업무 환경</li>
+            <li>보안·컴플라이언스 최우선 조직</li>
+          </ul>
+          <p class="scenario-section-label">한계</p>
+          <ul class="scenario-list limit" aria-label="Copilot 한계">
+            <li>Code Assistant 최하위(2.00) — GitHub Copilot 별도 라이선스 필요</li>
+          </ul>
+        </article>
+
+        <article class="scenario-card" aria-label="OpenAI GPT 도입 시나리오">
+          <p class="scenario-vendor">OpenAI GPT</p>
+          <h3 class="scenario-title">콘텐츠 생성 특화 파일럿</h3>
+          <span class="scenario-req-badge req-badge-secondary" aria-label="5개 카테고리 중 2개 상위권">✓ 2 / 5 카테고리 상위권</span>
+          <div class="scenario-cats" aria-label="카테고리별 상위권 여부 (섹션 02 기준 · 4.0점 이상)">
+            <span class="cat-chip cat-met" title="AI 성능 4.61">AI 성능</span>
+            <span class="cat-chip cat-not" title="보안/거버넌스 3.28">보안/거버넌스</span>
+            <span class="cat-chip cat-met" title="기간계/시스템 연동 4.36">기간계 연동</span>
+            <span class="cat-chip cat-not" title="비개발자 사용성 3.74">비개발자 사용성</span>
+            <span class="cat-chip cat-not" title="Code Assistant 3.56">Code Assistant</span>
+          </div>
+          <p class="scenario-section-label">적합 조건</p>
+          <ul class="scenario-list" aria-label="OpenAI 적합 조건">
+            <li>마케팅·콘텐츠 생성 특화 부서</li>
+          </ul>
+          <p class="scenario-section-label">한계</p>
+          <ul class="scenario-list limit" aria-label="OpenAI 한계">
+            <li>보안/거버넌스 미흡(3.28) — DLP 1.80점·문서 ACL 2.57점</li>
+            <li>비개발자 사용성 중위권(3.74)</li>
+          </ul>
+        </article>
+
+        <article class="scenario-card" aria-label="AI포털 도입 시나리오">
+          <p class="scenario-vendor">AI포털 (자체)</p>
+          <h3 class="scenario-title">내부 통제 우선 특수 환경</h3>
+          <span class="scenario-req-badge req-badge-secondary" aria-label="5개 카테고리 중 1개 상위권">✓ 1 / 5 카테고리 상위권</span>
+          <div class="scenario-cats" aria-label="카테고리별 상위권 여부 (섹션 02 기준 · 4.0점 이상)">
+            <span class="cat-chip cat-not" title="AI 성능 3.03">AI 성능</span>
+            <span class="cat-chip cat-met" title="보안/거버넌스 4.48">보안/거버넌스</span>
+            <span class="cat-chip cat-not" title="기간계/시스템 연동 2.96">기간계 연동</span>
+            <span class="cat-chip cat-not" title="비개발자 사용성 2.67">비개발자 사용성</span>
+            <span class="cat-chip cat-not" title="Code Assistant 2.07">Code Assistant</span>
+          </div>
+          <p class="scenario-section-label">적합 조건</p>
+          <ul class="scenario-list" aria-label="AI포털 적합 조건">
+            <li>시스템 연동 자체 개발 역량 보유</li>
+          </ul>
+          <p class="scenario-section-label">한계</p>
+          <ul class="scenario-list limit" aria-label="AI포털 한계">
+            <li>AI 성능(3.03) · Code Assistant(2.07) 하위권</li>
+          </ul>
+        </article>
+
+      </div>
+
+      <!-- 최종 권고 요약 -->
+      <div style="margin-top:28px; background:var(--bg-warm); border:1px solid var(--divider); border-left:4px solid var(--amber-border); border-radius:0 8px 8px 0; padding:18px 24px;" aria-label="최종 권고 요약">
+        <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--amber); margin-bottom:8px;">최종 평가 결론</p>
+        <p style="font-size:13px; color:var(--text-primary); line-height:1.8; margin:0;">
+         종합 평가 결과, <strong>Claude</strong>는 AI 성능을 비롯한 주요 카테고리에서 고르게 상위권을 차지하며 최고 점수를 기록했습니다. 핵심 요건 5개 카테고리 중 4개를 충족하여 최우선 도입 AI 플랫폼으로 판단됩니다.
+        <br/>현재 개발 조직 내에서도 업무 효율성 향상을 위해 <strong>Claude Code</strong>를 도입·활용 중입니다.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== SECTION 6: 고려사항·보완 전략 ===== -->
+  <section id="section-security" aria-labelledby="security-title">
+    <div class="container">
+      <p class="section-label">05 — Considerations &amp; Supplement Strategy</p>
+      <h2 class="section-title" id="security-title">고려사항·보완 전략</h2>
+      
+      <p class="subsection-label" style="margin: -20px 0 25px 0; border-left:3px solid var(--slate); padding-left:8px;">Claude를 전사 AI 업무 플랫폼으로 도입하기 위해서는 보안·거버넌스 영역 보완이 필요하며, 이와 관련한 과제 5개를 도출하였습니다. AI 센터의 포털 개발 경험과 노하우를 바탕으로 해당 사항을 보완해 나가겠습니다.</p>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+
+        <!-- 1열: 보안 축 -->
+        <div>
+          <p class="subsection-label" style="font-size: 12px; color:var(--text-muted);">보안·거버넌스 제약 사항 및 AI포털 연계 필요성</p>
+          <div style="background:var(--bg-warm); border:1px solid var(--divider); border-left:4px solid var(--divider); border-radius:0 8px 8px 0; padding:20px 24px;" aria-label="보안 축: 보안·거버넌스 보완 방향">
+          <!-- <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:var(--slate); margin-bottom:8px;">보안 축 · Security</p> -->
+          <!-- 비교 블록: 항목별 프로그레스 바 -->
+          <div style="margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div style="display:flex; gap:14px; align-items:center;">
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--terracotta); font-weight:700;">
+                  <span style="width:10px; height:10px; border-radius:2px; background:var(--terracotta); display:inline-block;"></span>Claude
+                </span>
+                <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; color:#166534; font-weight:700;">
+                  <span style="width:10px; height:10px; border-radius:2px; background:#166534; display:inline-block;"></span>AI포털
+                </span>
+              </div>
+              <!-- <a href="#section-matrix" style="font-size:10px; color:var(--slate); text-decoration:none; border:1px solid var(--divider); border-radius:4px; padding:2px 8px; white-space:nowrap;">출처: §02 매트릭스 ↑</a> -->
+            </div>
+
+            <!-- 항목 1: 암호화된 문서 접근 -->
+            <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:6px; padding:14px 16px; margin-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; font-weight:700; color:var(--text-primary);">암호화된 문서 접근 <span style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.7; font-style:italic;">(항목 번호 : #14-22)</span></span>
+                <span style="font-size:11px; font-weight:700; color:#166534; background:var(--green-bg); border-radius:20px; padding:2px 8px;">+1.43 △</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10px; color:var(--terracotta); font-weight:700; width:48px; flex-shrink:0;">Claude</span>
+                  <div style="flex:1; background:var(--divider); border-radius:3px; height:8px; overflow:hidden;">
+                    <div style="width:calc(2.43/5*100%); background:var(--terracotta); height:100%; border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; color:var(--terracotta); width:34px; text-align:right; flex-shrink:0;">2.43점</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10px; color:#166534; font-weight:700; width:48px; flex-shrink:0;">AI포털</span>
+                  <div style="flex:1; background:var(--divider); border-radius:3px; height:8px; overflow:hidden;">
+                    <div style="width:calc(3.86/5*100%); background:#166534; height:100%; border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; color:#166534; width:34px; text-align:right; flex-shrink:0;">3.86점</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 항목 2: DLP -->
+            <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:6px; padding:14px 16px; margin-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; font-weight:700; color:var(--text-primary);">콘텐츠 데이터 유출방지(DLP) <span style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.7; font-style:italic;">(항목 번호 : #148-152)</span></span>
+                <span style="font-size:11px; font-weight:700; color:#166534; background:var(--green-bg); border-radius:20px; padding:2px 8px;">+3.4 △</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10px; color:var(--terracotta); font-weight:700; width:48px; flex-shrink:0;">Claude</span>
+                  <div style="flex:1; background:var(--divider); border-radius:3px; height:8px; overflow:hidden;">
+                    <div style="width:calc(1.4/5*100%); background:var(--terracotta); height:100%; border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; color:var(--terracotta); width:34px; text-align:right; flex-shrink:0;">1.4점</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10px; color:#166534; font-weight:700; width:48px; flex-shrink:0;">AI포털</span>
+                  <div style="flex:1; background:var(--divider); border-radius:3px; height:8px; overflow:hidden;">
+                    <div style="width:calc(4.8/5*100%); background:#166534; height:100%; border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; color:#166534; width:34px; text-align:right; flex-shrink:0;">4.8점</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 항목 3: 감사 로그 -->
+            <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:6px; padding:14px 16px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; font-weight:700; color:var(--text-primary);">감사(Audit) 로그 관리 <span style="font-size:11px; color:var(--text-muted); margin-top:10px; line-height:1.7; font-style:italic;">(항목 번호 : #161-166)</span></span>
+                <span style="font-size:11px; font-weight:700; color:#166534; background:var(--green-bg); border-radius:20px; padding:2px 8px;">+1.0 △</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10px; color:#92400E; font-weight:700; width:48px; flex-shrink:0;">Claude</span>
+                  <div style="flex:1; background:var(--divider); border-radius:3px; height:8px; overflow:hidden;">
+                    <div style="width:calc(3.6/5*100%); background:#92400E; height:100%; border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; color:#92400E; width:34px; text-align:right; flex-shrink:0;">3.6점</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:10px; color:#166534; font-weight:700; width:48px; flex-shrink:0;">AI포털</span>
+                  <div style="flex:1; background:var(--divider); border-radius:3px; height:8px; overflow:hidden;">
+                    <div style="width:calc(4.6/5*100%); background:#166534; height:100%; border-radius:3px;"></div>
+                  </div>
+                  <span style="font-size:12px; font-weight:700; color:#166534; width:34px; text-align:right; flex-shrink:0;">4.6점</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <hr style="border:none; border-top:1px solid var(--divider); margin:14px 0;">
+
+          <p style="font-size:12px; color:var(--text-secondary); line-height:1.7;">
+            사내 업무 환경이 <strong>M365(Teams·SharePoint·Outlook)</strong> 기반으로 운영됨에 따라, 암호화된 문서 접근(2.43점)·콘텐츠 데이터 유출방지 DLP(1.4점)·감사 로그 관리(3.6점) 영역에서 Claude의 보안·거버넌스 통제 수준이 사내 요건을 충족하지 못합니다.
+            이로 인해 <strong>Claude의 AI 수행력을 사내에서 그대로 활용하기 어려운 상황</strong>이며, 해당 요건을 충족하기 위해서는 AI포털 포털과의 보안 연계가 필요합니다.
+            AI포털는 DLP(4.8점)·감사 로그(5.0점) 영역에서 강점을 보유하여 Claude의 취약 영역을 보완합니다.
+          </p>
+          </div>
+        </div>
+
+        <!-- 2열: 풀어나가야 할 과제 (수직 배치) -->
+        <div aria-label="예상 진행 과제">
+          <p class="subsection-label" style="font-size: 12px; color:var(--text-muted);">예상 진행 과제 · Key Challenges</p>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+
+            <!-- 과제 1 -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="01" style="background:var(--card-bg); border:1px solid var(--divider); border-top:3px solid var(--terracotta); border-radius:8px; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:8px;">과제 01 · 보안/거버넌스</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">암호화된 문서 접근 방안 수립</p>
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">MIP/DRM 암호화 문서를 AX팀 복호화 모듈로 처리 후 격리 샌드박스 환경에서 Claude 연계 구성 필요</p>
+              <p class="challenge-hint">현황·해결방안·기대효과 보기 →</p>
+            </div>
+
+            <!-- 과제 2 -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="02" style="background:var(--card-bg); border:1px solid var(--divider); border-top:3px solid var(--terracotta); border-radius:8px; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:8px;">과제 02 · 보안/거버넌스</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">데이터 유출 방지(DLP) 방안 수립</p>
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">AI포털 레이어 연계 및 Claude Enterprise 관리자 필터링 기능 활용으로 민감정보 외부 유출 차단 체계 구성 필요</p>
+              <p class="challenge-hint">현황·해결방안·기대효과 보기 →</p>
+            </div>
+
+            <!-- 과제 3 -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="03" style="background:var(--card-bg); border:1px solid var(--divider); border-top:3px solid var(--terracotta); border-radius:8px; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:8px;">과제 03 · 보안/거버넌스</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">감사로그 구성 방안 수립</p>
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">Claude Compliance API 연동 및 AI포털 Log Manager 연계로 전사 AI 사용 이력 통합 추적·감사 체계 완성 필요</p>
+              <p class="challenge-hint">현황·해결방안·기대효과 보기 →</p>
+            </div>
+            <button class="process-btn" onclick="openProcessModal()" style="margin-top:8px; background:none; border:none; padding:0; font-size:12px; color:#92400E; font-weight:600; cursor:pointer; text-decoration:underline; text-underline-offset:3px;" aria-haspopup="dialog">AI 문서 반출 프로세스(안) 보기</button>
+
+            <!-- 과제 4 -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="tft" style="background:var(--card-bg); border:1px solid var(--divider); border-top:3px solid var(--amber-border); border-radius:8px; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin-bottom:8px;">과제 04 · 생산성</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">HR AI TF 진행</p>
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">Claude Code 중심으로 바이브 코딩이 활성화 됨에 따라 사업부 전 부문의 생산성, 효율성을 위해 TFT 구성</p>
+              <p class="challenge-hint">추진배경/조직·세부과업 보기 →</p>
+            </div>
+
+            <!-- 과제 5 (신규) -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="04" style="background:var(--card-bg); border:1px solid var(--divider); border-top:3px solid var(--amber-border); border-radius:8px; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin-bottom:8px;">과제 05 · 당사 도입</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">당사 실행계획 수립</p>
+              <!-- <div style="display:flex; gap:10px; margin-bottom:12px;">
+                <span style="background:var(--amber-light); border:1px solid rgba(217,119,6,0.3); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; color:var(--amber);">6월 · 1차 도입</span>
+                <span style="background:var(--bg-warm); border:1px solid var(--divider); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; color:var(--text-muted);">9월 · 완성·결과물 공유</span>
+              </div> -->
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">20~50명 시범 운영 → 기존 계정 연계 → 산발적 Claude 계정 취합 → Claude Enterprise 관리 기능 검증</p>
+              <p class="challenge-hint">단계별 실행 계획 보기 →</p>
+            </div>
+
+            <!-- 구분선: 추가 고려사항 -->
+            <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+              <div style="flex:1; height:1px; background:var(--divider);"></div>
+              <span style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--slate); white-space:nowrap;">추가 고려사항</span>
+              <div style="flex:1; height:1px; background:var(--divider);"></div>
+            </div>
+
+            <!-- 과제 5 (구 04): AI 산출물 관리 -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="05" style="background:#EFF6FF; border:1px solid #BFDBFE; border-left:4px solid #3B82F6; border-radius:0 8px 8px 0; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#2563EB; margin-bottom:8px;">추가 과제 · 정책/거버넌스</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">회사 자원 활용 결과물 관리 방안</p>
+              <!-- <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(59,130,246,0.08); border-radius:4px; padding:6px 10px; margin-bottom:12px;">
+                <span style="font-size:11px; color:var(--text-muted);">단기</span>
+                <span style="font-size:13px; font-weight:700; color:#1D4ED8;">내부 배포망 + 스토어 등록 정책</span>
+              </div> -->
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">
+                회사 AI 자원(라이선스·인프라·데이터)을 활용해 개발한 웹·앱 결과물의 소유권·배포 정책 수립 필요.
+                <!-- <strong>단기:</strong> 내부 배포망 + 2인 이상 사용 시 스토어 등록 의무화. <strong>장기:</strong> AI 플랫폼 스토어 기반 통합 관리. -->
+              </p>
+              <p class="challenge-hint">해결방안 보기 →</p>
+            </div>
+
+            <!-- 과제 6 (구 05): 그룹웨어 연계 -->
+            <div class="challenge-card-clickable" role="button" tabindex="0" data-challenge="06" style="background:#F5F3FF; border:1px solid #DDD6FE; border-left:4px solid #7C3AED; border-radius:0 8px 8px 0; padding:18px 20px;">
+              <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#6D28D9; margin-bottom:8px;">추후 고려사항 · 시스템연계</p>
+              <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:10px;">AI 포탈-그룹웨어(GW) 연계 전략 <span style="font-size:11px; font-weight:400; color:var(--text-muted);">— 연 단위 대형 프로젝트</span></p>
+              <!-- <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(124,58,237,0.06); border-radius:4px; padding:6px 10px; margin-bottom:12px;">
+                <span style="font-size:11px; color:var(--text-muted);">연계 방식</span>
+                <span style="font-size:13px; font-weight:700; color:#6D28D9;">기존 GW 호출 방식 (완전 대체 아님)</span>
+              </div> -->
+              <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">
+                AI 포탈을 <strong>인터페이스 레이어</strong>로 활용해 기존 GW 시스템(결재·메일·회의실 예약 등)을 호출하는 방식.
+                GW 완전 대체가 아닌 기존 시스템 유지 원칙. 연 단위 대형 프로젝트로 중장기 검토 사항.
+              </p>
+              <p class="challenge-hint">전략 보기 →</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 블록 2: 벤더별 포지셔닝 요약 테이블 -->
+      <!-- <div style="margin-top:32px; margin-bottom:32px;">
+        <p class="scenario-section-label" style="margin-top:0;">벤더별 포지셔닝 요약</p>
+        <div class="matrix-wrapper" role="region" aria-label="벤더별 포지셔닝 요약 테이블 (가로 스크롤 가능)" tabindex="0">
+          <table class="matrix-table">
+            <caption class="sr-only">4개 벤더의 적합 환경, 핵심 강점, 주의사항 요약. Claude가 전사 주력 벤더로 권고됨.</caption>
+            <thead>
+              <tr>
+                <th scope="col">벤더</th>
+                <th scope="col" class="claude-col">적합 환경</th>
+                <th scope="col">핵심 강점</th>
+                <th scope="col">주의사항</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="claude-col" style="font-weight:700; color:var(--amber);">Claude (Anthropic)</td>
+                <td class="claude-col">균형 잡힌 전사 AI 플랫폼</td>
+                <td class="claude-col">AI 성능 전 축 최고, 대용량 문서 처리, RAG·Code Assistant 겸비</td>
+                <td class="claude-col">기간계 연동·보안 거버넌스 추가 구성 필요</td>
+              </tr>
+              <tr>
+                <td>Microsoft Copilot</td>
+                <td>M365 기반 오피스 특화 환경</td>
+                <td>Word·Excel·Teams 내장, 기간계 연동, 보안·거버넌스 기본 충족</td>
+                <td>코드 지원 취약, 모델 성능 Claude 대비 낮음</td>
+              </tr>
+              <tr>
+                <td>OpenAI GPT</td>
+                <td>콘텐츠 생성 특화 파일럿</td>
+                <td>콘텐츠 생성·AI 모델 성능 강점, Code Assistant 지원</td>
+                <td>기업 연동 제한, 비개발자 사용성 미흡, 거버넌스 부분 충족</td>
+              </tr>
+              <tr>
+                <td>AI포털 (자체)</td>
+                <td>내부 통제 우선 특수 환경</td>
+                <td>보안·거버넌스 통제 최강, 온프레미스 운영 가능</td>
+                <td>기능 완성도 미흡, 비개발자 사용성 미검증, 종합 점수 최하위</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div> -->
+
+      <!-- 블록 3: 3단계 실행 계획 -->
+      <!-- <div>
+        <p class="scenario-section-label" style="margin-top:0;">다음 단계 — 3단계 실행 계획</p>
+        <div class="score-grid" role="list" aria-label="3단계 실행 계획">
+
+          <article class="score-card" role="listitem" aria-label="1단계: 파일럿 도입">
+            <p class="vendor-rank">STEP 01 · 1~3개월</p>
+            <p class="vendor-name">파일럿 도입</p>
+            <p class="score-tagline">
+              개발·기획·법무 등 핵심 부서 대상으로 Claude 파일럿을 실시합니다.
+              대용량 문서 처리·Code Assistant·현업 문서 생성 3개 유스케이스를 중심으로
+              실사용 만족도와 업무 효율 지표를 수집합니다.
+            </p>
+          </article>
+
+          <article class="score-card" role="listitem" aria-label="2단계: 검증 및 보완">
+            <p class="vendor-rank">STEP 02 · 4~6개월</p>
+            <p class="vendor-name">검증 및 보완</p>
+            <p class="score-tagline">
+              파일럿 결과를 토대로 SSO·RBAC·감사 로그 등 보안·거버넌스 구성을 완료하고
+              기간계 연동 방안을 수립합니다. Copilot 병행 운영을
+              M365 오피스 특화 영역에 한해 검토합니다.
+            </p>
+          </article>
+
+          <article class="score-card claude" role="listitem" aria-label="3단계: 전사 확대">
+            <p class="vendor-rank">STEP 03 · 7개월~</p>
+            <p class="vendor-name">전사 확대</p>
+            <p class="score-tagline">
+              검증 완료 후 Claude를 전사 AI 플랫폼으로 정식 도입합니다.
+              내부 통제가 필요한 특수 환경은 AI포털와의 역할 분담을 확정하고,
+              전사 교육·가이드라인 수립을 통해 지속적인 거버넌스 체계를 구축합니다.
+            </p>
+          </article>
+
+          <article class="score-card" role="listitem" aria-label="참고: 평가 기준일">
+            <p class="vendor-rank">평가 기준일</p>
+            <p class="vendor-name">2026년 4월 20일</p>
+            <p class="score-tagline">
+              본 평가는 2026-04-20 기준 내부 평가 보고서 v1.0에 근거합니다.
+              벤더 기능 업데이트에 따라 정기 재평가를 권장합니다.
+            </p>
+          </article>
+
+        </div>
+      </div> -->
+
+    </div>
+  </section>
+
+  <!-- ===== SECTION 7: 결론 ===== -->
+  <section id="section-plans" aria-labelledby="process-title">
+    <div class="container">
+      <p class="section-label">06 — Plans</p>
+      <h2 class="section-title" id="process-title">향후 계획</h2>
+
+      <!-- 결론 요약 카드 -->
+      <!-- <article class="score-card claude" style="margin-bottom:28px;" aria-label="결론: Anthropic Claude Enterprise 도입 결정">
+        <p class="vendor-rank">검토 결론</p>
+        <p class="vendor-name" style="font-size:18px;">Anthropic Claude Enterprise — 최적 솔루션 선정</p>
+        <p class="score-tagline" style="font-size:13px; line-height:1.8; padding-top:0; border-top:none; margin-bottom:0;">
+          기업용 AI 도입을 위한 검토 결과, <strong>Anthropic Claude Enterprise</strong>를 가장 적합한 솔루션으로 도출하였습니다.
+          전사 AI 플랫폼 요건 충족도, AI 성능 등 전반적 평가에서 최우수 결과를 기록하였으며,
+          단계적 도입을 통해 리스크를 최소화하며 전사 확대를 추진합니다.
+        </p>
+      </article> -->
+
+      <!-- 도입 로드맵 -->
+      <div aria-label="도입 로드맵">
+
+        <!-- 타임라인 헤더 (4단계) -->
+        <div style="position:relative; margin-bottom:24px;">
+          <!-- 연결선: 4개 마커 중심을 잇는 3색 그라디언트 -->
+          <div style="position:absolute; top:28px; left:12.5%; right:12.5%; height:2px;
+            background:linear-gradient(90deg, #CBD5E1 33.3%, var(--amber-border) 33.3%, var(--amber-border) 66.7%, #A5B4FC 66.7%);
+            z-index:0;"></div>
+
+          <!-- 4개 마커 그리드 -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0; position:relative; z-index:1;">
+
+            <!-- Step 1: ~6월 준비 -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:#F1F5F9; border:3px solid #CBD5E1; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:#64748B;">01</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#64748B; margin-bottom:2px;">준비</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">준비 및 의사결정</p>
+                <p style="font-size:11px; color:var(--text-muted);">~6월</p>
+              </div>
+            </div>
+
+            <!-- Step 2: 7~9월 시범운영 -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:var(--amber-light); border:3px solid var(--amber-border); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:var(--amber);">02</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin-bottom:2px;">Phase 1</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">시범 운영</p>
+                <p style="font-size:11px; color:var(--text-muted);">7 ~ 9월</p>
+              </div>
+            </div>
+
+            <!-- Step 3: 9월 말 결과보고 -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:var(--terracotta-bg); border:3px solid #FDBA74; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:var(--terracotta);">03</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:2px;">검토</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">결과 검토</p>
+                <p style="font-size:11px; color:var(--text-muted);">10월</p>
+              </div>
+            </div>
+
+            <!-- Step 4: 10월~ 전사도입 -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+              <div style="width:56px; height:56px; border-radius:50%; background:#EEF2FF; border:3px solid #A5B4FC; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 4px var(--bg);">
+                <span style="font-size:11px; font-weight:800; color:#4B7BF5;">04</span>
+              </div>
+              <div>
+                <p style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#4B7BF5; margin-bottom:2px;">Phase 2</p>
+                <p style="font-size:15px; font-weight:700; color:var(--text-primary); line-height:1.2; margin-bottom:3px;">전사 도입</p>
+                <p style="font-size:11px; color:var(--text-muted);">11월 이후</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 4개 카드 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px;">
+
+          <!-- Card 1: ~6월 준비 -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid #CBD5E1; border-radius:8px; padding:20px;">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#F1F5F9; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#64748B; flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">벤더 선정 의사결정</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#F1F5F9; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#64748B; flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">사내 AI 정책 및 보안 검토</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#F1F5F9; border:1px solid #CBD5E1; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#64748B; flex-shrink:0; margin-top:1px;">3</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">파일럿 대상 부서·계정 준비</p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 2: 7~9월 시범운영 -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid var(--amber-border); border-radius:8px; padding:20px;">
+            <!-- <p style="font-size:11px; color:var(--amber); background:var(--amber-light); border:1px solid var(--amber-border); border-radius:4px; padding:3px 10px; display:inline-block; margin-bottom:14px; font-weight:600;">내부 한정 · 수십 카피</p> -->
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--amber-light); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--amber); flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">기업용 서비스 관리 기능 검증 및 비용 확인</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--amber-light); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--amber); flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">전사 도입 요건 및 거버넌스 보완사항 점검</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--amber-light); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--amber); flex-shrink:0; margin-top:1px;">3</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">세부 운영 방안 마련</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--amber-light); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--amber); flex-shrink:0; margin-top:1px;">4</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">업무별 활용 사례 수집</p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 3: 9월 말 결과보고 -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid #FDBA74; border-radius:8px; padding:20px;">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--terracotta-bg); border:1px solid #FDBA74; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--terracotta); flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">사용량·비용·생산성 효과 분석</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--terracotta-bg); border:1px solid #FDBA74; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--terracotta); flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">개선사항 및 전사 도입 권고안 작성</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:var(--terracotta-bg); border:1px solid #FDBA74; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:var(--terracotta); flex-shrink:0; margin-top:1px;">3</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">전사 도입 실행 계획 초안 수립</p>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Card 4: 10월~ 전사도입 -->
+          <div style="background:var(--card-bg); border:1px solid var(--divider); border-top:4px solid #A5B4FC; border-radius:8px; padding:20px;">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:11px;">
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#EEF2FF; border:1px solid #A5B4FC; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#4B7BF5; flex-shrink:0; margin-top:1px;">1</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">전사 도입 보고 및 경영 계획 반영</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#EEF2FF; border:1px solid #A5B4FC; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#4B7BF5; flex-shrink:0; margin-top:1px;">2</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">Claude Enterprise 라이선스 전사 확대 적용</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#EEF2FF; border:1px solid #A5B4FC; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#4B7BF5; flex-shrink:0; margin-top:1px;">3</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">운영 모니터링 체계 구축 및 지속 개선</p>
+              </li>
+              <li style="display:grid; grid-template-columns:18px 1fr; gap:8px; align-items:start;">
+                <span style="width:18px; height:18px; border-radius:50%; background:#EEF2FF; border:1px solid #A5B4FC; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; color:#4B7BF5; flex-shrink:0; margin-top:1px;">4</span>
+                <p style="font-size:12px; color:var(--text-secondary); line-height:1.6;">그룹적용여부 검토 - 지주사 협의</p>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- ===== SECTION 7: 통합 구현 프로세스 ===== -->
+  <section id="section-process" aria-labelledby="process-title" style="display:none;">
+    <div class="container">
+      <!-- <p class="section-label">07 — Integrated Implementation Process</p> -->
+      <!-- <h2 class="section-title" id="process-title">AI 문서 반출 프로세스</h2> -->
+      <p style="font-size:12px; color:var(--text-muted); margin-top:-20px; margin-bottom:28px;">과제 01·02·03 해결방안 통합 흐름 — 암호화 문서부터 Claude 활용 결과물 수령까지</p>
+
+      <div class="process-scroll-wrapper">
+        <div class="process-inner">
+
+          <!-- 스텝 행 -->
+          <div class="process-stepper" aria-label="11단계 통합 구현 프로세스">
+
+            <!-- Step 1 -->
+            <div class="process-step">
+              <div class="step-circle zone-start" aria-label="Step 1">1</div>
+              <div class="step-label">암호화된<br>문서</div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="process-step">
+              <div class="step-circle zone-internal" aria-label="Step 2">2</div>
+              <div class="step-label">반출 시스템<br>등록/신청</div>
+              <span class="step-tag t01">과제01</span>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="process-step">
+              <div class="step-circle zone-internal" aria-label="Step 3">3</div>
+              <div class="step-label">문서 컨텐츠<br>필터링</div>
+              <span class="step-tag t02">과제02</span>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="process-step">
+              <div class="step-circle zone-internal" aria-label="Step 4">4</div>
+              <div class="step-label">결재자<br>알림</div>
+              <span class="step-tag t02">과제02</span>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="process-step">
+              <div class="step-circle zone-start" aria-label="Step 5">5</div>
+              <div class="step-label">승인/반려</div>
+            </div>
+
+            <!-- Step 6 -->
+            <div class="process-step">
+              <div class="step-circle zone-internal" aria-label="Step 6">6</div>
+              <div class="step-label">문서<br>복호화</div>
+              <span class="step-tag t01">과제01</span>
+            </div>
+
+            <!-- Step 7 -->
+            <div class="process-step">
+              <div class="step-circle zone-internal" aria-label="Step 7">7</div>
+              <div class="step-label">샌드박스<br>환경 등록</div>
+              <span class="step-tag t01">과제01</span>
+            </div>
+
+            <!-- Step 8 -->
+            <div class="process-step">
+              <div class="step-circle zone-internal" aria-label="Step 8">8</div>
+              <div class="step-label">Claude 접근<br>MCP 연동</div>
+              <span class="step-tag t01">과제01</span>
+            </div>
+
+            <!-- Step 9 (경계 지점) -->
+            <div class="process-step">
+              <div class="step-circle zone-claude" aria-label="Step 9">9</div>
+              <div class="step-label">AI 문서 작업 요청(프롬프트)</div>
+              <span class="step-tag tclaude">Claude</span>
+            </div>
+
+            <!-- Step 10 -->
+            <div class="process-step">
+              <div class="step-circle zone-claude" aria-label="Step 10">10</div>
+              <div class="step-label">AI 처리<br>후 응답</div>
+              <span class="step-tag tclaude">Claude</span>
+            </div>
+
+            <!-- Step 11 -->
+            <div class="process-step">
+              <div class="step-circle zone-claude" aria-label="Step 11">11</div>
+              <div class="step-label">사용자<br>로컬 다운로드</div>
+              <span class="step-tag tclaude">Claude</span>
+            </div>
+
+          </div><!-- /process-stepper -->
+
+          <!-- 감사 범위 배너 (각 flex 비율 = 스텝 수) -->
+          <div class="audit-bands" aria-label="감사 범위 표시">
+
+            <!-- Row 1: 사내 감사로그 (Step 2~9, 8 steps) -->
+            <div class="audit-band-row">
+              <div class="band-spacer" style="flex:1;"></div>
+              <div class="audit-band internal-audit" style="flex:8;">
+                <span class="step-tag t03" style="margin-top: 0px;">과제03</span> &nbsp; 사내 감사로그 관리 &nbsp;(Step 2 ~ 9)
+              </div>
+              <div class="band-spacer" style="flex:2;"></div>
+            </div>
+
+            <!-- Row 2: Claude Compliance (Step 9~11, 3 steps) -->
+            <div class="audit-band-row">
+              <div class="band-spacer" style="flex:8;"></div>
+              <div class="audit-band claude-compliance" style="flex:3;">
+                <span class="step-tag t03" style="margin-top: 0px;">과제03</span> &nbsp;✦&nbsp; Claude Compliance &nbsp;(Step 9 ~ 11)
+              </div>
+            </div>
+
+          </div><!-- /audit-bands -->
+
+        </div><!-- /process-inner -->
+      </div><!-- /process-scroll-wrapper -->
+    
+
+    </div>
+  </section>
+  <!-- ===== END SECTION 7 ===== -->
+
+  <footer class="dashboard-footer" role="contentinfo">
+    <div class="container">
+      <p>출처: 내부 평가 보고서 · 98개 항목 평가 · 본 자료는 경영 의사결정 참고용입니다.</p>
+    </div>
+  </footer>
+
+  <div id="smart-tooltip" role="tooltip" aria-hidden="true"></div>
+
+  <!-- Category Detail Modal -->
+  <div id="cat-modal-overlay" aria-hidden="true"></div>
+  <div id="cat-modal" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title" hidden>
+    <div id="cat-modal-header">
+      <h2 id="cat-modal-title"></h2>
+      <button id="cat-modal-close" class="challenge-panel-close" aria-label="닫기">✕</button>
+    </div>
+    <div id="cat-modal-body"></div>
+  </div>
+
+  <!-- Process Modal -->
+  <div id="process-modal-overlay" aria-hidden="true"></div>
+  <div id="process-modal" role="dialog" aria-modal="true" aria-labelledby="process-modal-title" hidden>
+    <div id="process-modal-header">
+      <h2 id="process-modal-title" style="font-family:var(--font-serif); font-size:18px; color:var(--text-primary); margin:0;">AI 문서 반출 프로세스</h2>
+      <button id="process-modal-close" class="challenge-panel-close" aria-label="닫기">✕</button>
+    </div>
+    <div id="process-modal-body"></div>
+  </div>
+
+  <!-- Challenge Side Panel -->
+  <div id="challenge-panel-overlay" aria-hidden="true"></div>
+  <div id="challenge-panel" role="dialog" aria-modal="true" aria-labelledby="challenge-panel-title" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
+      <div>
+        <p id="challenge-panel-badge" style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:6px;"></p>
+        <h2 id="challenge-panel-title" style="font-family:var(--font-serif); font-size:20px; color:var(--text-primary); line-height:1.3;"></h2>
+      </div>
+      <button class="challenge-panel-close" id="challenge-panel-close" aria-label="패널 닫기">✕</button>
+    </div>
+    <div id="challenge-panel-score" style="margin-bottom:20px;"></div>
+    <div id="challenge-panel-body"></div>
+  </div>
+
+  <script>
+    // ===== Chart.js Radar =====
+    const CLAUDE_C = 'rgba(217,119,6,1)';
+    const CLAUDE_F = 'rgba(217,119,6,0.2)';
+    const OTHERS = [
+      { c: 'rgba(59,130,246,1)',   f: 'rgba(59,130,246,0.08)'  },  // OpenAI - blue
+      { c: 'rgba(16,185,129,1)',   f: 'rgba(16,185,129,0.08)'  },  // Copilot - teal
+      { c: 'rgba(139,92,246,1)',   f: 'rgba(139,92,246,0.08)'  },  // AI포털 - purple
+    ];
+
+    const baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.r}점` } }
+      },
+      scales: {
+        r: {
+          min: 0, max: 5,
+          ticks: {
+            stepSize: 1,
+            font: { size: 10, family: "'Noto Sans KR', sans-serif" },
+            color: '#94A3B8',
+            backdropColor: 'transparent',
+          },
+          pointLabels: {
+            font: { size: 11, family: "'Noto Sans KR', sans-serif" },
+            color: '#1A2332',
+          },
+          grid: { color: '#E2DDD6' },
+          angleLines: { color: '#E2DDD6' },
+        }
+      }
+    };
+
+    function ds(label, data, isClaude, otherIdx) {
+      if (isClaude) return {
+        label, data,
+        borderColor: CLAUDE_C, backgroundColor: CLAUDE_F,
+        borderWidth: 2.5, borderDash: [],
+        pointBackgroundColor: CLAUDE_C, pointRadius: 4, pointHoverRadius: 6,
+        order: 0,
+      };
+      const o = OTHERS[otherIdx] || OTHERS[0];
+      return {
+        label, data,
+        borderColor: o.c, backgroundColor: o.f,
+        borderWidth: 1, borderDash: [],
+        pointBackgroundColor: o.c, pointRadius: 3, pointHoverRadius: 5,
+        order: otherIdx + 1,
+      };
+    }
+
+    const charts = {};
+
+    charts['main'] = new Chart(document.getElementById('chart-main'), {
+      type: 'radar',
+      data: {
+        labels: ['AI 성능', '보안/거버넌스', '기간계/시스템 연동', '비개발자 사용성', 'Code Assistant'],
+        datasets: [
+          ds('Claude',  [4.94, 3.03, 4.26, 4.31, 4.50], true,  0),
+          ds('OpenAI',  [4.61, 3.28, 4.36, 3.74, 3.56], false, 0),
+          ds('Copilot', [3.39, 4.55, 4.43, 4.35, 2.00], false, 1),
+          ds('AI포털',  [3.03, 4.48, 3.10, 3.00, 2.07], false, 2),
+        ]
+      },
+      options: baseOptions
+    });
+
+    // ===== Vendor Legend Interaction =====
+    const VENDOR_IDX = { claude: 0, openai: 1, copilot: 2, aicenter: 3 };
+
+    const defaultInsights = {
+      main: '벤더 항목을 클릭하면 해당 벤더의 분석을 확인할 수 있습니다.'
+    };
+
+    const vendorInsights = {
+      main: {
+        claude:   'AI 성능(4.94)·Code Assistant(4.50)·비개발자 사용성(4.31) 상위권. 보안/거버넌스(3.03) 상대적 취약.',
+        openai:   'AI 성능(4.61)·기간계 연동(4.36) 강점. 비개발자 사용성(3.74)·보안/거버넌스(3.28) 중위권.',
+        copilot:  '보안/거버넌스(4.55)·기간계 연동(4.43)·비개발자 사용성(4.35) 강점. Code Assistant(2.00) 취약.',
+        aicenter: '보안/거버넌스(4.48) 강점. AI 성능(2.94)·비개발자 사용성(2.67)·Code Assistant(2.07) 하위권.'
+      }
+    };
+
+    const selectedVendors = { main: new Set() };
+
+    const origStyles = {};
+    origStyles['main'] = charts['main'].data.datasets.map(d => ({
+      borderColor: d.borderColor,
+      backgroundColor: d.backgroundColor,
+      borderWidth: d.borderWidth,
+      pointRadius: d.pointRadius,
+    }));
+
+    function applyChartSelection(panelKey) {
+      const chart = charts[panelKey];
+      const sel = selectedVendors[panelKey];
+      if (sel.size === 0) {
+        chart.data.datasets.forEach((d, i) => Object.assign(d, origStyles[panelKey][i]));
+      } else {
+        chart.data.datasets.forEach((d, i) => {
+          const vendorKey = Object.keys(VENDOR_IDX).find(k => VENDOR_IDX[k] === i);
+          if (sel.has(vendorKey)) {
+            Object.assign(d, origStyles[panelKey][i]);
+            d.borderWidth = i === 0 ? 3 : 2;
+          } else {
+            d.borderColor = 'rgba(180,180,180,0.2)';
+            d.backgroundColor = 'rgba(180,180,180,0.02)';
+            d.borderWidth = 0.5;
+            d.pointRadius = 1;
+          }
+        });
+      }
+      chart.update('none');
+    }
+
+    function handleLegendClick(panelKey, vendorKey) {
+      const panel = document.getElementById('panel-main');
+      const insightP = panel.querySelector('.radar-insight p');
+      const allItems = panel.querySelectorAll('.radar-legend-item');
+      const sel = selectedVendors[panelKey];
+
+      if (sel.has(vendorKey)) {
+        sel.delete(vendorKey);
+      } else {
+        sel.add(vendorKey);
+      }
+
+      if (sel.size === 0) {
+        insightP.textContent = defaultInsights[panelKey];
+        allItems.forEach(item => {
+          item.classList.remove('vendor-selected', 'vendor-dimmed');
+          item.setAttribute('aria-pressed', 'false');
+        });
+      } else {
+        const lastVendor = vendorKey;
+        insightP.textContent = sel.size === 1
+          ? vendorInsights[panelKey][lastVendor]
+          : [...sel].map(v => vendorInsights[panelKey][v]).join(' / ');
+        allItems.forEach(item => {
+          const isSelected = sel.has(item.dataset.vendor);
+          item.classList.toggle('vendor-selected', isSelected);
+          item.classList.toggle('vendor-dimmed', !isSelected);
+          item.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        });
+      }
+
+      applyChartSelection(panelKey);
+    }
+
+    document.querySelectorAll('.radar-legend-item[data-vendor]').forEach(item => {
+      const vendorKey = item.dataset.vendor;
+      item.addEventListener('click', () => handleLegendClick('main', vendorKey));
+      item.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLegendClick('main', vendorKey); }
+      });
+    });
+
+    // ===== Challenge Side Panel =====
+    const CHALLENGE_SOLUTIONS = {
+      '01': {
+        badge: '과제 01 · 보안/거버넌스',
+        title: '암호화된 문서 접근 방안 수립',
+        score: { label: '현재 Claude 점수', value: '2.43점', colorVar: 'var(--terracotta)', bgVar: 'var(--terracotta-bg)' },
+        sections: [
+          {
+            heading: '현황 및 문제',
+            items: [
+              'M365 기반 문서 암호화(MIP/DRM) 정책으로 인해 Claude 등 생성형 AI 서비스에서 사내 암호화 문서 접근 및 활용이 제한됨',
+              '문서 요약·편집·분석 등 AI 핵심 기능 활용에 제약이 발생하며, 업무 생산성 향상 효과 확보에 어려움 존재'
+            ]
+          },
+          {
+            heading: '권장 해결방안',
+            items: [
+              'AX팀에서 개발한 복호화 모듈을 활용하여 MIP/DRM 암호화 문서 복호화 체계 구성 → 문서 반출 승인 완료 시점에 한해 복호화 처리 (구성 및 정책 검토 필요)',
+              '복호화 문서 저장을 위한 격리형 저장 환경 구성 → 개인 단기 저장 영역 및 NAS 기반 장기 샌드박스 환경 분리 운영',
+              'MCP 서버 기반 Claude ↔ NAS 연계 구성 → 승인된 문서에 한하여 제한적 접근 및 활용 체계 마련'
+            ]
+          },
+          {
+            heading: '기대 효과',
+            items: [
+              'MIP/DRM 암호화 문서에 대해서도 승인 기반 AI 활용 환경 제공 가능',
+              '문서 요약·편집·분석 등 Claude 기능을 사내 환경에서 그대로 활용 가능',
+              '격리형 샌드박스 운영을 통해 보안 수준을 유지하면서도 AI 기반 업무 생산성 향상 기대'
+            ]
+          },
+          {
+            heading: '예상 공수',
+            content : '총 예상 공수 : 약 1 M/M',
+            note: '※ 상기 공수는 현재 기준의 예상 산출치이며, 상세 요구사항 분석 및 개발 범위 확정 과정에서 변동될 수 있습니다.'
+          }
+        ]
+      },
+      '02': {
+        badge: '과제 02 · 보안/거버넌스',
+        title: '데이터 유출 방지(DLP) 방안 수립',
+        score: { label: '현재 Claude 점수', value: '1.4점', colorVar: 'var(--terracotta)', bgVar: 'var(--terracotta-bg)' },
+        sections: [
+          {
+            heading: '현황 및 문제',
+            items: [
+              '외부 LLM 활용 과정에서 기밀 데이터 및 민감 정보가 외부 서버로 전송될 가능성 존재'
+            ]
+          },
+          {
+            heading: '권장 해결방안',
+            content: '키워드·문맥 기반 민감정보 탐지 체계를 구축하여 기밀 문서의 AI 반출 시도를 사전에 식별하고 승인자 알림 프로세스 마련 → MIP 문서 암·복호화 시 파일 사전 검사를 수행하여 유출 위험 항목을 탐지하고, 위험 수준에 따라 경고 및 차단 기능 제공'
+            
+          },
+          {
+            heading: '기대 효과',
+            items: [
+              '민감 정보의 외부 LLM 전송을 사전 차단하여 데이터 유출 위험 최소화 가능',
+              '입력·반출 이력 관리 및 결재 연계를 통해 보안 통제 및 책임 체계 강화',
+              '보안 정책을 유지하면서도 생성형 AI 활용 범위 확대 가능',
+              'AI 활용 과정의 감사 대응 및 내부 통제 체계 확보 기대'
+          ]
+          },
+          {
+            heading: '예상 공수',
+            content : '총 예상 공수 : 약 1 M/M',
+            note: '※ 상기 공수는 현재 기준의 예상 산출치이며, 상세 요구사항 분석 및 개발 범위 확정 과정에서 변동될 수 있습니다.'
+          }
+        ]
+      },
+      '03': {
+        badge: '과제 03 · 보안/거버넌스',
+        title: '감사로그 구성 방안 수립',
+        score: { label: '현재 Claude 점수', value: '3.6점', colorVar: '#92400E', bgVar: 'var(--neutral-bg)' },
+        sections: [
+          {
+            heading: '현황 및 문제',
+            items: [
+              'AI 활용 과정에 대한 문서 반출 및 사용 이력 Audit 체계 미흡',
+              'Claude Compliance API 기반 사용 이력 수집 및 모니터링 기능 부재',
+              '이상 행위 탐지 및 사후 추적 체계 부족으로 보안 감사 대응 한계 존재'
+            ]
+          },
+          {
+            heading: '권장 해결방안',
+            items: [
+              'Claude Compliance API 연계를 통한 AI 사용 이력 자동 수집 체계 구성 → 사용자·프롬프트·응답·문서 활용 이력 등 주요 로그 통합 관리',
+              'Log Manager 연계 기반 통합 모니터링 환경 구성 → 문서 반출 및 AI 사용 현황 대시보드 형태로 통합 제공',
+              '이상 행위 탐지 정책 구성 → 대용량 문서 반출·비업무 시간 사용·반복 다운로드 등 이상 패턴 탐지 및 담당자 알림 체계 구축',
+              '감사 대응을 위한 로그 보관 및 추적 체계 마련 → 사용자 행위 기반 사후 분석 및 감사 대응 지원'
+            ]
+          },
+          {
+            heading: '기대 효과',
+             items: [
+              'Claude Compliance API 및 Log Manager 기반 AI 사용 이력을 통합 관리 가능',
+              '사용자·프롬프트·문서 활용 이력에 대한 감사 추적 체계 확보',
+              '이상 패턴 탐지를 통한 보안 사고 사전 예방 및 대응 강화',
+              'AI 활용에 대한 내부 통제 및 거버넌스 수준 향상 기대',
+              '중장기적으로 AI 활용 환경에 대한 감사 및 컴플라이언스 대응 기반 마련 가능'
+          ]
+          },
+          {
+            heading: '예상 공수',
+            content : '총 예상 공수 : 약 1 M/M',
+            note: '※ 상기 공수는 현재 기준의 예상 산출치이며, 상세 요구사항 분석 및 개발 범위 확정 과정에서 변동될 수 있습니다.'
+          }
+        ]
+      },
+      'tft': {
+        badge: '과제 04 · 생산성',
+        title: 'HR AI TF 진행',
+        score: { label: 'TFT 구성 인원', value: '14명 · 4개 그룹', colorVar: 'var(--terracotta)', bgVar: 'var(--terracotta-bg)' },
+        sections: [
+          {
+            heading: '추진 배경',
+            items: [
+              'Claude Code를 중심으로 바이브 코딩 Tool이 활성화됨에 따라 사업부 전 부문의 생산성·효율성 확보 필요',
+              '빠른 내재화를 목표로 소수 인원으로 TFT 구성',
+              '솔루션개발팀장 중심으로 4개 그룹 운영, 3개월 집중 과제 수행'
+            ]
+          },
+          {
+            heading: '세부 과업 (5개 영역)',
+            html: `<div style="display:grid; gap:8px;">
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-left:3px solid var(--terracotta); border-radius:0 8px 8px 0; padding:12px 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div style="flex:0 0 120px;">
+        <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:3px;">설계 혁신 및 표준화</p>
+        <p style="font-size:11px; font-weight:700; color:var(--text-primary);">솔루션개발팀</p>
+      </div>
+      <div style="flex:1; font-size:11px; color:var(--text-secondary); line-height:1.6;">Figma MCP + Claude Code 연동, 디자인→코드 자동 추출, 버전관리 체계 마련</div>
+      <div style="flex:0 0 130px; text-align:right;">
+        <p style="font-size:10px; color:var(--text-muted); line-height:1.5;">설계-구현 정합성 100%<br>프론트엔드 개발 속도 혁신</p>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-left:3px solid var(--terracotta); border-radius:0 8px 8px 0; padding:12px 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div style="flex:0 0 120px;">
+        <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:3px;">프로젝트 적용</p>
+        <p style="font-size:11px; font-weight:700; color:var(--text-primary);">HR사업팀</p>
+      </div>
+      <div style="flex:1; font-size:11px; color:var(--text-secondary); line-height:1.6;">SI 프로젝트 1곳 선정 (그룹 PJT), Claude Code 기반 실전 개발</div>
+      <div style="flex:0 0 130px; text-align:right;">
+        <p style="font-size:10px; color:var(--text-muted); line-height:1.5;">실질적 M/D 절감 데이터 확보<br>SI 현장 확산</p>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-left:3px solid var(--terracotta); border-radius:0 8px 8px 0; padding:12px 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div style="flex:0 0 120px;">
+        <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:3px;">운영 최적화</p>
+        <p style="font-size:11px; font-weight:700; color:var(--text-primary);">HR서비스팀</p>
+      </div>
+      <div style="flex:1; font-size:11px; color:var(--text-secondary); line-height:1.6;">레거시 코드 분석, 테스트 자동화, 버그 수정 AI 접목</div>
+      <div style="flex:0 0 130px; text-align:right;">
+        <p style="font-size:10px; color:var(--text-muted); line-height:1.5;">운영 인력 효율화<br>MTTR 단축</p>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-left:3px solid var(--terracotta); border-radius:0 8px 8px 0; padding:12px 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div style="flex:0 0 120px;">
+        <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:3px;">거버넌스</p>
+        <p style="font-size:11px; font-weight:700; color:var(--text-primary);">PMO</p>
+      </div>
+      <div style="flex:1; font-size:11px; color:var(--text-secondary); line-height:1.6;">AI 협업 최적화 PM 표준 수립, 진척 지표 재정의</div>
+      <div style="flex:0 0 130px; text-align:right;">
+        <p style="font-size:10px; color:var(--text-muted); line-height:1.5;">관리 투명성<br>예측 가능성 확보</p>
+      </div>
+    </div>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-left:3px solid var(--terracotta); border-radius:0 8px 8px 0; padding:12px 14px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+      <div style="flex:0 0 120px;">
+        <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--terracotta); margin-bottom:3px;">업무 효율화</p>
+        <p style="font-size:11px; font-weight:700; color:var(--text-primary);">WORKUP팀</p>
+      </div>
+      <div style="flex:1; font-size:11px; color:var(--text-secondary); line-height:1.6;">평가 모듈 리뉴얼, 추가개발 적용, API 명세서 웹/매뉴얼 제작</div>
+      <div style="flex:0 0 130px; text-align:right;">
+        <p style="font-size:10px; color:var(--text-muted); line-height:1.5;">추가개발 및<br>고객 서비스 응대 효율화</p>
+      </div>
+    </div>
+  </div>
+</div>`
+          },
+          {
+            heading: '추진 조직 (4개 그룹 · 13명)',
+            html: `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">그룹 1</p>
+    <p style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:5px;">설계 혁신·소스관리</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.7;"><strong>박정열 팀장</strong>, 김보람 책임, 류요선 책임, 박경민 책임</p>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">그룹 2</p>
+    <p style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:5px;">프로젝트 적용 (그룹)</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.7;"><strong>서명석 수석</strong>, 정원석 수석, 박수진 선임, 박지만 책임</p>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">그룹 3</p>
+    <p style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:5px;">유지보수·연말정산 고도화</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.7;"><strong>김민석 책임</strong>, 신민경 선임, 진예림 선임</p>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">그룹 4</p>
+    <p style="font-size:11px; font-weight:700; color:var(--text-primary); margin-bottom:5px;">추가개발·SaaS 업무효율화</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.7;"><strong>김은정 책임</strong>, 이승현 책임</p>
+  </div>
+</div>`
+          }
+        ]
+      },
+      '04': {
+        badge: '과제 04 · 당사 도입',
+        title: '당사 실행계획 수립',
+        score: { label: '목표 도입 규모', value: '20~50명 시범 운영', colorVar: 'var(--amber)', bgVar: 'var(--amber-light)' },
+        sections: [
+          {
+            heading: '핵심 실행 지표',
+            html: `<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">Pilot Scope</p>
+    <p style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">초기 도입 규모</p>
+    <p style="font-size:26px; font-weight:800; color:var(--amber); line-height:1.2; margin-bottom:3px;">20~50</p>
+    <p style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">유저 시범 운영</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.6;">관리직·개발자를 각각 10~25 계정 수준으로 구성 검토</p>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">Account Cleanup</p>
+    <p style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">산발적 계정 취합·정리</p>
+    <p style="font-size:26px; font-weight:800; color:var(--amber); line-height:1.2; margin-bottom:3px;">17+</p>
+    <p style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">기운영 계정 통합 대상</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.6;">산발적 계정을 Enterprise 체계로 취합·정리</p>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:12px 14px;">
+    <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">Enterprise Validation</p>
+    <p style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:3px;">관리 체계 검증</p>
+    <p style="font-size:18px; font-weight:800; color:var(--amber); line-height:1.2; margin-bottom:3px;">운영검증</p>
+    <p style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">관리·보안·운영 기능 확인</p>
+    <p style="font-size:11px; color:var(--text-secondary); line-height:1.6;">권한·계정 관리, 감사로그, 사용량 확인, 정책 적용 등 시범 운영 중 검토</p>
+  </div>
+</div>`
+          },
+          {
+            heading: '단계별 일정',
+            html: `<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:13px 15px;">
+    <p style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">6,7월 · 준비</p>
+    <p style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">시범 운영 착수</p>
+    <ul style="margin:0; padding-left:15px; font-size:11px; color:var(--text-secondary); line-height:1.9;">
+      <li>벤더 선정</li>
+      <li>과제 01~03 구성 방안 기준 마련</li>
+      <li>관리직·개발자 중심 시범 운영 대상 확정</li>
+      <li>기존 산발 계정 취합 및 Enterprise 계정 체계 정리</li>
+    </ul>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-radius:8px; padding:13px 15px;">
+    <p style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:5px;">7~9월 · 시범 운영</p>
+    <p style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">실제 사용량·기능·정책 방향 검증</p>
+    <ul style="margin:0; padding-left:15px; font-size:11px; color:var(--text-secondary); line-height:1.9;">
+      <li>실제 업무 기준 토큰 사용량 및 예상 비용 분석</li>
+      <li>Claude Enterprise 관리 기능 실사용 검토</li>
+      <li>개발·문서·보고·회의 등 업무별 활용 사례 수집</li>
+      <li>전사 확산 시 운영 정책 및 보안 기준 정리</li>
+    </ul>
+  </div>
+  <div style="background:var(--card-bg); border:1px solid var(--divider); border-left:3px solid var(--amber-border); border-radius:0 8px 8px 0; padding:13px 15px;">
+    <p style="font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--amber); margin-bottom:5px;">10월, 11월 이후 · 리뷰 및 전사도입</p>
+    <p style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px;">시범 운영 결과 리뷰 및 확대 방향 결정</p>
+    <ul style="margin:0; padding-left:15px; font-size:11px; color:var(--text-secondary); line-height:1.9;">
+      <li>사용량·비용·생산성 효과 리뷰</li>
+      <li>Claude Enterprise 관리 기능 검증 결과 정리</li>
+      <li>전사 확산 방안 및 그룹사 도입 방향 수립</li>
+      <li>Claude Enterprise 라이선스 전사 확대 적용</li>
+    </ul>
+  </div>
+</div>`
+          },
+          {
+            heading: '',
+            html: `<div style="background:var(--amber-light); border:1px solid rgba(217,119,6,0.25); border-left:3px solid var(--amber-border); border-radius:0 8px 8px 0; padding:16px 18px;">
+  <p style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; color:var(--amber); margin-bottom:8px;">추진 방향</p>
+  <p style="font-size:13px; font-weight:700; color:var(--text-primary); line-height:1.6; margin-bottom:10px;">단순 기능 검토 목적이 아닌 실제 업무 환경 기반의 운영 데이터 확보 및 전사 확산 전략 수립을 목표로 함</p>
+  <p style="font-size:12px; color:var(--text-secondary); line-height:1.9;">Enterprise 체계 전환을 통해 계정·보안·운영 기준을 통합 관리할 필요가 있습니다. 제한적 시범 운영을 통해 실제 운영 데이터를 확보하고, 전사 확대 여부는 시범 운영 결과를 기반으로 단계적으로 검토 예정</p>
+</div>`
+          }
+        ]
+      },
+      '05': {
+        badge: '추가 과제 · 정책/거버넌스',
+        title: '회사 자원 활용 결과물 관리 방안',
+        score: { label: '대상', value: 'AI 활용 개발 산출물 (웹/앱)', colorVar: '#1D4ED8', bgVar: 'rgba(59,130,246,0.08)' },
+        sections: [
+          {
+            heading: '현황 및 문제',
+            content: '회사 AI 라이선스·인프라·데이터를 활용해 개발한 웹·앱 산출물(바이브코딩 결과물 포함)에 대한 소유권 및 배포 정책이 부재한 상황입니다. 이로 인해 승인되지 않은 서비스가 외부에 공개되거나 기업 데이터가 포함된 결과물이 외부로 유출될 위험이 존재합니다. 또한 Shadow AI 통제 체계가 미흡하여 비공식 서비스가 무분별하게 운영될 가능성이 있으며, 향후 외부 사용자 대상 서비스 제공 시 보안·운영·책임 범위에 대한 기준도 필요한 상황입니다.'
+          },
+          {
+            heading: '권장 해결방안',
+            items: [
+              '[단기] 내부망 기반 배포 환경 제공 → Object Storage, VM/Kubernetes, 개인 PC 포워딩 게이트웨이 등을 활용하여 외부 직접 노출 없이 AI 서비스 배포가 가능한 표준 환경 제공',
+              '[장기] AI 플랫폼 Store 기반 통합 관리 체계 구축 → Portal(사용자 UI) · Store(서비스 등록/배포) · Manager(관리/통제) 구조 기반으로 전사 AI 산출물의 개발·배포·운영 라이프사이클 통합 관리',
+'[정책] AI 플랫폼 Store 등록 의무화 → 2인 이상이 사용하는 AI 활용 서비스는 AI 플랫폼 Store 등록을 의무화하고, DB 연계·외부 공유·대외 공개 시 승인 절차 적용',
+'[정책] 외부 서비스 제공 기준 수립 → 내부 권한 체계와 인증 체계를 상속받아 구축 가능한 서비스는 에코시스템 내 서비스로 추가 가능 단, 이를 충족하지 못하는 외부 서비스는 링크 연동 방식으로만 제공',
+'[정책] 기존 시스템 연계 원칙 정의 → 생성형 AI 서비스는 기존 시스템을 완전 대체하는 방식이 아닌, 기존 시스템 호출 및 연계 기반으로 활용 원칙 수립',
+
+            ]
+          },
+          {
+            heading: '기대 효과',
+            items: [
+              '내부망 기반 배포 환경 및 Store 등록 체계를 통해 기업 데이터의 외부 공개 위험을 최소화하고 Shadow AI를 통제할 수 있습니다.',
+'또한 서비스 등록·승인·운영 기준을 표준화하여 중복 개발을 방지하고 재사용 가능한 AI 자산 관리 체계를 구축할 수 있습니다.',
+'향후 외부 서비스 확장 시에도 일관된 보안·운영·거버넌스 정책 적용이 가능하며, 전사 차원의 AI 개발·배포 관리 수준 향상이 기대됩니다.'
+            ]
+          },
+          {
+            heading: '예시',
+            items: [
+              '사내 업무 앱 : 일부 계열사에서 제작하여 사용중',
+              'AI를 통한 개발 결과물 외부 호스팅을 누구나 접근이 가능해  보안을 위해 내부 서버 반영이 필요'
+            ]
+          },
+          {
+            heading: '예상 공수',
+            content : '총 예상 공수 : 약 1~1.5 M/M',
+            note: '※ 상기 공수는 현재 기준의 예상 산출치이며, 상세 요구사항 분석 및 개발 범위 확정 과정에서 변동될 수 있습니다.'
+          }
+        ]
+      },
+      '06': {
+        badge: '추후 고려사항 · 시스템연계',
+        title: 'AI 포탈-그룹웨어(GW) 연계 전략',
+        score: { label: '규모 및 성격', value: '연 단위 대형 프로젝트 — 중장기 검토', colorVar: '#6D28D9', bgVar: 'rgba(124,58,237,0.06)' },
+        sections: [
+          {
+            heading: '현황 및 문제',
+            items: [
+              '생성형 AI 활용 확대에 따라 결재·메일·예약·사내 시스템 조회 등 그룹웨어 기능과 AI 연계 요구 증가',
+'기존 그룹웨어(GW)를 직접 수정하거나 대체하는 방식은 시스템 영향도 및 운영 리스크가 높음',
+'그룹웨어 구조 변경 시 장애 영향 범위 확대 및 유지보수 복잡도 증가 가능',
+'현재 AI 활용은 개별 기능 단위로 분산되어 있어 통합 사용자 경험 제공에 한계 존재'
+            ]
+          },
+          {
+            heading: '권장 해결 방안',
+            items: [
+              'AI 포탈 중심 Interface Layer 구조 적용 → AI 포탈에서 기존 그룹웨어 및 사내 시스템 기능을 호출하는 방식으로 연계',
+'기존 GW 시스템 유지 원칙 적용 → 결재·메일·회의실 예약·사내 시스템 등 핵심 기능은 기존 그룹웨어에서 지속 운영',
+'API 및 호출 기반 연계 구조 구성 → 직접 시스템 대체가 아닌 API·Agent·MCP 기반 호출 방식 중심으로 연계 체계 구성',
+'단계적 기능 확장 전략 적용 → 조회·알림·예약 등 저위험 기능부터 우선 적용 후 업무 영역 확대 검토',
+'서비스 통합 운영 체계 → 연 단위 중장기 과제로 검토 및 추진 필요',
+            ]
+          },
+          {
+            heading: '기대 효과',
+            items: [
+              '기존 그룹웨어 안정성을 유지하면서 AI 기반 업무 경험 제공 가능',
+'그룹웨어 구조 변경 최소화를 통해 도입 속도 및 운영 안정성 확보',
+'자연어 기반 업무 처리 환경 제공으로 사용자 편의성 및 업무 생산성 향상 기대',
+'향후 사내 시스템 전반으로 AI 연계 확장이 가능한 표준 인터페이스 구조 확보',
+'기존 시스템 자산을 활용하면서도 단계적 AI 전환 기반 마련 가능'
+            ]
+          },
+          {
+            heading: '예상 공수',
+            items: [
+              '주요 GW 기능(API/호출 기반) 연계 : 약 2~3 M/M',
+'서비스 통합 운영 체계 : 범위 산정 불가로 공수 산정 불가'
+            ],
+            note: '※ 상기 공수는 현재 기준의 예상 산출치이며, 상세 요구사항 분석 및 개발 범위 확정 과정에서 변동될 수 있습니다.'
+          }
+        ]
+      }
+    };
+
+    function buildPanelHTML(data) {
+      return data.sections.map(sec => {
+        const titleHTML = sec.heading ? `<p class="challenge-panel-section-title">${sec.heading}</p>` : '';
+        const noteHTML = sec.note ? `<p style="font-size:11px; color:var(--text-muted); line-height:1.6; margin-top:8px;">${sec.note}</p>` : '';
+        if (sec.html) {
+          return `<div class="challenge-panel-section">${titleHTML}${sec.html}${noteHTML}</div>`;
+        }
+        if (sec.items) {
+          const listHTML = sec.items.map(it => `<li>${it}</li>`).join('');
+          return `<div class="challenge-panel-section">${titleHTML}<ul class="challenge-panel-items">${listHTML}</ul>${noteHTML}</div>`;
+        }
+        return `<div class="challenge-panel-section">${titleHTML}<p style="font-size:13px; color:var(--text-secondary); line-height:1.7;">${sec.content}</p>${noteHTML}</div>`;
+      }).join('');
+    }
+
+    function openChallengePanel(id) {
+      const data = CHALLENGE_SOLUTIONS[id];
+      if (!data) return;
+      document.getElementById('challenge-panel-badge').textContent = data.badge;
+      document.getElementById('challenge-panel-title').textContent = data.title;
+      document.getElementById('challenge-panel-score').innerHTML =
+        `<div style="display:flex; justify-content:space-between; align-items:center; background:${data.score.bgVar}; border-radius:6px; padding:8px 12px;">
+           <span style="font-size:11px; color:var(--text-muted);">${data.score.label}</span>
+           <span style="font-size:14px; font-weight:700; color:${data.score.colorVar};">${data.score.value}</span>
+         </div>`;
+      document.getElementById('challenge-panel-body').innerHTML = buildPanelHTML(data);
+      const panel = document.getElementById('challenge-panel');
+      const overlay = document.getElementById('challenge-panel-overlay');
+      panel.removeAttribute('hidden');
+      requestAnimationFrame(() => {
+        panel.classList.add('open');
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+      });
+      document.getElementById('challenge-panel-close').focus();
+    }
+
+    function closeChallengePanel() {
+      const panel = document.getElementById('challenge-panel');
+      const overlay = document.getElementById('challenge-panel-overlay');
+      panel.classList.remove('open');
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      panel.addEventListener('transitionend', () => panel.setAttribute('hidden', ''), { once: true });
+    }
+
+    document.querySelectorAll('.challenge-card-clickable').forEach(card => {
+      card.addEventListener('click', () => openChallengePanel(card.dataset.challenge));
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openChallengePanel(card.dataset.challenge); }
+      });
+    });
+    document.getElementById('challenge-panel-close').addEventListener('click', closeChallengePanel);
+    document.getElementById('challenge-panel-overlay').addEventListener('click', closeChallengePanel);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { closeChallengePanel(); closeCategoryModal(); closeProcessModal(); }
+    });
+
+    // ===== Process Modal =====
+    function openProcessModal() {
+      const body = document.getElementById('process-modal-body');
+      if (!body.hasChildNodes()) {
+        const src = document.getElementById('section-process');
+        const clone = src.cloneNode(true);
+        clone.style.display = '';
+        body.appendChild(clone);
+      }
+      const modal = document.getElementById('process-modal');
+      const overlay = document.getElementById('process-modal-overlay');
+      modal.removeAttribute('hidden');
+      requestAnimationFrame(() => {
+        modal.classList.add('open');
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+      });
+      document.getElementById('process-modal-close').focus();
+    }
+
+    function closeProcessModal() {
+      const modal = document.getElementById('process-modal');
+      const overlay = document.getElementById('process-modal-overlay');
+      modal.classList.remove('open');
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      modal.addEventListener('transitionend', () => modal.setAttribute('hidden', ''), { once: true });
+    }
+
+    document.getElementById('process-modal-close').addEventListener('click', closeProcessModal);
+    document.getElementById('process-modal-overlay').addEventListener('click', closeProcessModal);
+
+    // ===== Category Detail Modal =====
+    const CATEGORY_DATA = {
+      'ai-performance': {
+        title: 'AI 성능 — 카테고리별 항목 점수',
+        total: { openai: '4.61', claude: '4.94', copilot: '3.39', aicenter: '3.03' },
+        sections: [
+          {
+            heading: '10. AI 모델 성능·품질',
+            subtotal: { openai: '4.40', claude: '4.90', copilot: '3.30', aicenter: '3.00' },
+            items: [
+              { no: 179, text: '사용자 질문의 숨은 맥락·의도까지 파악해 적절한 응답 생성', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 180, text: '주어진 자료와 문맥에 근거한 신중한 응답 생성 및 근거 없는 단정 최소화', openai: 4, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 181, text: '동일·유사 질의에서 논조·구조·판단 기준의 일관성 유지', openai: 4, claude: 4, copilot: 3, aicenter: 3 },
+              { no: 182, text: '긴 대화와 대용량 문서에서도 앞뒤 맥락과 핵심 논점을 안정적으로 유지', openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 183, text: '복잡한 조건의 논리 추론·다단계 분석·쟁점 정리에 강함', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 184, text: '복합 지시사항과 세부 제약조건을 끝까지 반영해 응답', openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 185, text: '장문·다문서 입력에서도 핵심 내용, 예외, 상충 포인트를 놓치지 않고 분석', openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 186, text: '한국어 포함 다국어 환경에서 자연스럽고 정교한 문장 품질 유지', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 187, text: '민감하거나 불확실한 사안에서 과도한 단정 없이 신중하게 응답', openai: 4, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 188, text: '복잡한 문제를 구조화하고 추론 과정을 바탕으로 해결 방향 제시', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '11. 콘텐츠 생성 품질',
+            subtotal: { openai: '4.67', claude: '5.00', copilot: '3.33', aicenter: '3.12' },
+            items: [
+              { no: 189, text: '보고서·기획서·검토서 등 장문의 업무 문서를 높은 완성도로 작성', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 190, text: '모호함이 적고 문장 간 연결이 자연스러운 읽기 쉬운 콘텐츠 작성', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 191, text: '업종·직무·독자 수준에 맞는 어조·용어·문체를 정교하게 조절', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 192, text: '복잡한 정보를 논리적 구조, 계층, 목차 체계로 정돈해 전달', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 193, text: '여러 관점과 대안을 균형 있게 제시하고 비교 논거를 함께 제공', openai: 4, claude: 5, copilot: 3, aicenter: 4 },
+              { no: 194, text: '주장과 분석 결과를 근거·전제·해석 흐름과 함께 설득력 있게 제시', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 195, text: '장문 작성 시 처음부터 끝까지 논조·구조·서술 밀도를 안정적으로 유지',openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 196, text: '공식/비공식, 전문/대중 대상에 따라 문체와 설명 깊이를 세밀하게 조절', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 197, text: '여러 문서를 비교·대조해 공통점, 차이점, 시사점을 종합적으로 서술', openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '12. 수행력',
+            subtotal: { openai: '4.70', claude: '4.90', copilot: '3.60', aicenter: '3.00' },
+            items: [
+              { no: 198, text: '주어진 업무 지시를 큰 수정 없이 목적에 맞게 완성하는 비율', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 199, text: '복잡한 검토·정리·문서화 업무에서 시간과 사고 부담을 실질적으로 경감', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 201, text: '여러 단계와 여러 문서를 엮는 복합 업무를 흐름 끊김 없이 처리', openai: 4, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 202, text: '특정 산업·직무 맥락을 반영해 실무형 결과물로 연결', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 203, text: '모호한 지시나 불완전한 정보에서도 합리적 가정을 세우고 대응', openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 204, text: '산출물의 논리와 표현이 안정적이어서 사용자가 신뢰하고 실무에 바로 활용 가능', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 205, text: '반복 업무에서도 설명 방식·품질·형식을 일관되게 유지', openai: 4, claude: 4, copilot: 4, aicenter: 3 },
+              { no: 206, text: '응답 내 모순·누락을 스스로 점검하고 더 나은 방향으로 보정',  openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 207, text: '복잡한 판단 과정을 사용자가 이해할 수 있도록 단계적으로 설명', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 208, text: '사용자 피드백을 반영해 후속 응답의 정교함과 적합성을 점진적으로 개선', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '4-1. 일반 채팅 — 추론·사고 품질',
+            subtotal: { openai: '5.00', claude: '5.00', copilot: '3.00', aicenter: '3.00' },
+            items: [
+              { no: 32, text: '복잡한 다중 조건 지시사항을 끝까지 반영해 요건 이탈 없이 응답 완성', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 33, text: 'Extended Thinking 기반 심층 분석 요청 시 단계별 추론 근거 함께 제공', openai: 5, claude: 5, copilot: 2, aicenter: 3 },
+            ]
+          },
+        ]
+      },
+      'security': {
+        title: '보안/거버넌스 — 카테고리별 항목 점수',
+        total: { openai: '3.28', claude: '3.03', copilot: '4.55', aicenter: '4.48' },
+        sections: [
+          {
+            heading: '1. 계정·조직·권한 거버넌스',
+            subtotal: { openai: '4.00', claude: '4.00', copilot: '5.00', aicenter: '5.00' },
+            items: [
+              { no: 1,  text: '그룹 표준 SSO 기본 지원', openai: 5, claude: 5, copilot: 5, aicenter: 5 },
+              { no: 2,  text: 'SCIM/JIT 기반 사용자 자동 프로비저닝·비활성화', openai: 5, claude: 4, copilot: 5, aicenter: 5 },
+              { no: 3,  text: '전사/계열사/조직/부서/개인 단위 RBAC 세밀 설정', openai: 3, claude: 4, copilot: 5, aicenter: 5 },
+              { no: 7,  text: '퇴직자·휴직자 계정 및 AI 자산 접근권한 자동 정리', openai: 3, claude: 3, copilot: 5, aicenter: 5 },
+            ]
+          },
+          {
+            heading: '2. 데이터 프라이버시·컴플라이언스·계약 요건',
+            subtotal: { openai: '4.20', claude: '4.00', copilot: '5.00', aicenter: '5.00' },
+            items: [
+              { no: 8,  text: '프롬프트·첨부파일·결과물 AI 학습 미사용 보장', openai: 5, claude: 5, copilot: 5, aicenter: 5 },
+              { no: 9,  text: '데이터 보관기간·영구삭제·레지던시 관리자 통제', openai: 4, claude: 3, copilot: 5, aicenter: 5 },
+              { no: 10, text: 'SOC2·ISO27001·ISO42001 인증 자료 제공', openai: 4, claude: 5, copilot: 5, aicenter: 5 },
+              { no: 11, text: 'DPA 체결 가능', openai: 5, claude: 5, copilot: 5, aicenter: 5 },
+              { no: 13, text: '민감정보 처리·마스킹·삭제 정책 중앙 정의', openai: 3, claude: 2, copilot: 5, aicenter: 5 },
+            ]
+          },
+          {
+            heading: '3. 문서 ACL·보안 통제·접근 정책',
+            subtotal: { openai: '2.57', claude: '2.43', copilot: '4.43', aicenter: '3.86' },
+            items: [
+              { no: 14, text: '기존 시스템 문서 ACL 수동 동기화 없이 상속', openai: 2, claude: 2, copilot: 5, aicenter: 5 },
+              { no: 15, text: '권한 없는 사용자의 질의·우회 접근 원천 차단', aicenter: 5, openai: 4, claude: 4, copilot: 5, aicenter: 5 },
+              { no: 17, text: '부서 특화 챗봇/RAG 인덱싱 범위 조직 단위 분리', aicenter: 5, openai: 3, claude: 3, copilot: 4, aicenter: 5 },
+              { no: 18, text: 'AI 입력(프롬프트·첨부파일) 전송·저장 구간 암호화 보장', openai: 5, claude: 4, copilot: 5, aicenter: 3 },
+              { no: 20, text: '고위험·기밀 문서 접근 시 추가 인증·승인 단계 설정 가능', openai: 1, claude: 1, copilot: 3, aicenter: 3 },
+              { no: 21, text: '문서 등급·사용자 권한에 따른 AI 기능(요약·다운로드 등) 자동 제한', openai: 1, claude: 1, copilot: 4, aicenter: 3 },
+              { no: 22, text: 'AI 사용 중 발생한 보안 이벤트(무단 접근·이상 쿼리 등) 실시간 알림·차단', openai: 2, claude: 2, copilot: 5, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '5. 콘텐츠 정책·DLP·반출 통제',
+            subtotal: { openai: '1.80', claude: '1.40', copilot: '4.40', aicenter: '4.80' },
+            items: [
+              { no: 148, text: '그룹 표준 금칙어·민감어 사전 중앙 관리',  openai: 2, claude: 2, copilot: 5, aicenter: 5 },
+              { no: 149, text: '프롬프트·AI 응답·첨부파일 3단계 별도 통제', openai: 2, claude: 2, copilot: 4, aicenter: 5 },
+              { no: 150, text: '민감정보 탐지·마스킹·차단·경고 정책 적용', openai: 2, claude: 1, copilot: 5, aicenter: 5 },
+              { no: 151, text: '생성 결과물 외부 플랫폼 공유·로컬 반출 통제', openai: 2, claude: 1, copilot: 4, aicenter: 5 },
+              { no: 152, text: '문서 등급별 업로드·요약·인용·다운로드 허용 분리', openai: 1, claude: 1, copilot: 4, aicenter: 4 },
+            ]
+          },
+          {
+            heading: '7. 감사로그·보안 이력·추적성',
+            subtotal: { openai: '4.20', claude: '3.60', copilot: '3.80', aicenter: '4.60' },
+            items: [
+              { no: 161, text: '모든 사용자 프롬프트 원문 중앙 로깅·보관', openai: 5, claude: 4, copilot: 4, aicenter: 5 },
+              { no: 162, text: '업로드 파일·참조 원본 문서 접근 이력 추적', openai: 4, claude: 3, copilot: 5, aicenter: 5 },
+              { no: 163, text: 'MCP/API 호출 상세 이력·실행 결과 기록', openai: 4, claude: 4, copilot: 3, aicenter: 5 },
+              { no: 165, text: '관리자 권한 부여·회수·설정 변경 이력 보존', openai: 5, claude: 3, copilot: 5, aicenter: 5 },
+              { no: 166, text: '도구 실행 판단 근거·추론 과정까지 포함한 상세 감사 이력 제공', openai: 3, claude: 4, copilot: 2, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '9. 최종 판단 — 거버넌스 운영 적합성',
+            subtotal: { openai: '3.33', claude: '3.33', copilot: '5.00', aicenter: '3.67' },
+            items: [
+              { no: 174, text: '기존 권한체계·보안정책 훼손 없이 AI 활용 확장', openai: 4, claude: 4, copilot: 5, aicenter: 4 },
+              { no: 176, text: '웹 포털·챗봇·실행형·워크플로우·로컬·생산성 도구 연동 등 하나의 거버넌스 체계 연결', openai: 3, claude: 3, copilot: 5, aicenter: 3 },
+              { no: 178, text: '그룹 공통 컨트롤타워 관점 장기 운영 가능 구조', openai: 3, claude: 3, copilot: 5, aicenter: 4 },
+            ]
+          },
+        ]
+      },
+      'integration': {
+        title: '기간계/시스템 연동 — 카테고리별 항목 점수',
+        total: { openai: '4.36', claude: '4.26', copilot: '4.43', aicenter: '3.10' },
+        sections: [
+          {
+            heading: '4-4. 실행형 챗봇 (MCP/Action)',
+            subtotal: { openai: '3.6', claude: '4.00', copilot: '4.8', aicenter: '3.0' },
+            items: [
+              { no: 62, text: '그룹웨어·HR·ERP 등 외부 시스템과 MCP/API 기반 구조적 조회 연결', openai: 4, claude: 5, copilot: 5, aicenter: 4 },
+              { no: 63, text: '단순 조회를 넘어 실제 Action 실행', openai: 4, claude: 5, copilot: 5, aicenter: 2 },
+              { no: 75, text: '호출·실패·재시도 이력·비용·실패율 모니터링', openai: 3, claude: 3, copilot: 5, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '4-9. API 통합·확장성·맞춤화',
+            subtotal: { openai: '5.00', claude: '4.30', copilot: '4.0', aicenter: '3.0' },
+            items: [
+              { no: 128, text: '시스템 프롬프트·지시사항으로 AI 역할·응답 방식 세밀 맞춤화', openai: 5, claude: 5, copilot: 3, aicenter: 4 },
+              { no: 131, text: 'API 접근 키·권한 범위 조직·사용자별 세분화 발급·통제', openai: 5, claude: 3, copilot: 4, aicenter: 3 },
+              { no: 133, text: 'Enterprise SLA·응답속도·가용성 수준 보장 및 검증 가능', openai: 5, claude: 4, copilot: 5, aicenter: 2 },
+            ]
+          },
+          {
+            heading: '8. 기간계·커넥터·통합 아키텍처 적합성',
+            subtotal: { openai: '4.5', claude: '4.5', copilot: '4.5', aicenter: '3.5' },
+            items: [
+              { no: 168, text: '표준 API·MCP 기반 외부 시스템 구조적 연동 및 확장', openai: 5, claude: 5, copilot: 4, aicenter: 4 },
+              { no: 170, text: '사용자에게 복잡한 연결 설정 숨긴 공통 UX', openai: 4, claude: 4, copilot: 5, aicenter: 3  },
+            ]
+          },
+        ]
+      },
+      'usability': {
+        title: '비개발자 사용성 — 카테고리별 항목 점수',
+        total: { openai: '3.74', claude: '4.31', copilot: '4.35', aicenter: '3.00' },
+        sections: [
+          {
+            heading: '4-1. 일반 채팅',
+            subtotal: { openai: '4.50', claude: '4.80', copilot: '3.50', aicenter: '3.00' },
+            items: [
+              { no: 23, text: '자유 질의응답 지원', openai: 5, claude: 5, copilot: 5, aicenter: 3 },
+              { no: 24, text: '대용량 단일 문서(보고서 100페이지 이상) 전체를 단일 세션에서 완전 분석·질의응답', openai: 4, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 25, text: '장문 업무 문서(10페이지 이상 보고서·검토서) 단일 요청으로 고완성도 초안 생성', openai: 4, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 27, text: '이미지·문서·오디오 등 멀티미디어 파일 업로드 분석·이해 지원', openai: 5, claude: 4, copilot: 4, aicenter: 3 },
+              { no: 28, text: '대화 내 및 장기 프로젝트 컨텍스트(최소 100K 토큰 이상) 안정적 유지', openai: 4, claude: 5, copilot: 2, aicenter: 3 },
+              { no: 29, text: 'Projects 기반 지식·문서·설정·대화 이력 프로젝트 단위 영속 관리', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '4-3. 지식기반/RAG 챗봇',
+            subtotal: { openai: '3.7', claude: '4.7', copilot: '4.0', aicenter: '3.0' },
+            items: [
+              { no: 54, text: '최신 문서 기준 답변', openai: 4, claude: 4, copilot: 5, aicenter: 3 },
+              { no: 58, text: '대용량 문서셋(수십 문서)을 청킹 분할 없이 전체 컨텍스트 기반 분석', openai: 3, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 61, text: '복수 문서 간 상충·차이·공통 내용을 교차 비교하여 종합 답변 제공', openai: 4, claude: 5, copilot: 4, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '4-5. AI Agent Workflow (코드 불필요 자율 실행)',
+            subtotal: { openai: '4.00', claude: '4.00', copilot: '4.00', aicenter: '3.00' },
+            items: [
+              { no: 77, text: '자연어 지시만으로 다단계 업무를 AI가 자율 계획·실행 (코드 불필요)', openai: 4, claude: 4, copilot: 4, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '4-6. 작업공간/산출물 관리',
+            subtotal: { openai: '4.00', claude: '3.67', copilot: '5.00', aicenter: '3.00' },
+            items: [
+              { no: 93, text: '이전 결과물 재열기·이어서 작업',openai: 4, claude: 4, copilot: 5, aicenter: 3 },
+              { no: 94, text: '공유 범위 설정·공동 편집', openai: 4, claude: 3, copilot: 5, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '4-7. 로컬 실행형 자동화 · 4-8. 로컬 문서 작업',
+            subtotal: { openai: '3.00', claude: '4.50', copilot: '4.50', aicenter: '2.50' },
+            items: [
+              { no: 99,  text: '로컬 PC 파일 자동 처리 지원', openai: 3, claude: 4, copilot: 5, aicenter: 2 },
+              { no: 116, text: '자연어 지시만으로 로컬 Office 파일(docx·xlsx·pptx) 직접 생성·저장 (업로드 불필요)', openai: 3, claude: 5, copilot: 4, aicenter: 3 },
+            ]
+          },
+          {
+            heading: '9. 최종 판단 — 사용자·관리자 동시 충족',
+            subtotal: { openai: '4.00', claude: '4.00', copilot: '5.00', aicenter: '4.00' },
+            items: [
+              { no: 175, text: '사용자(쉬운 사용)·관리자(통제·감사·비용) 동시 충족', openai: 4, claude: 4, copilot: 5, aicenter: 4 },
+            ]
+          },
+        ]
+      },
+      'code-assistant': {
+        title: 'Code Assistant — 카테고리별 항목 점수',
+        total: { openai: '3.56', claude: '4.50', copilot: '2.00', aicenter: '2.07' },
+        sections: [
+          {
+            heading: '4-10. 현업용 프로그램 생성',
+            subtotal: { openai: '3.86', claude: '4.14', copilot: '3.29', aicenter: '3.71' },
+            items: [
+              { no: 137, text: '스크립트·매크로·간단한 앱·자동화 도구 초안 생성', openai: 5, claude: 5, copilot: 4, aicenter: 3 },
+              { no: 138, text: 'API/MCP 연계 로직 포함 코드 생성', openai: 5, claude: 5, copilot: 3, aicenter: 3 },
+              { no: 139, text: '생성된 프로그램 테스트·수정', openai: 5, claude: 4, copilot: 3, aicenter: 3 },
+              { no: 141, text: '코드·스크립트 생성 허용 범위 설정', openai: 3, claude: 3, copilot: 3, aicenter: 4 },
+              { no: 143, text: '외부 라이브러리 사용 제한', openai: 3, claude: 4, copilot: 4, aicenter: 4 },
+              { no: 145, text: '비밀정보·API 키 사용 통제', openai: 3, claude: 4, copilot: 4, aicenter: 5},
+              { no: 146, text: '보안 점검·취약점 스캔 연계', openai: 3, claude: 4, copilot: 2, aicenter: 4 },
+            ]
+          },
+          {
+            heading: '4-11. Code Assistant (IDE/CLI)',
+            subtotal: { openai: '3.14', claude: '4.71', copilot: '1.00', aicenter: '1.00' },
+            items: [
+              { no: 209, text: 'IDE(VS Code·JetBrains 등) 플러그인 형태로 코드 자동완성·제안 지원', openai: 2, claude: 4, copilot: 1, aicenter: 1 },
+              { no: 210, text: 'CLI 환경에서 자연어 지시로 코드 생성·수정·실행 가능', openai: 4, claude: 5, copilot: 1, aicenter: 1 },
+              { no: 211, text: '코드 리뷰·버그 탐지·개선 제안 자동 수행', openai: 3, claude: 5, copilot: 1, aicenter: 1 },
+              { no: 212, text: '레거시 코드 분석·리팩토링·마이그레이션 지원', openai: 3, claude: 5, copilot: 1, aicenter: 1 },
+              { no: 213, text: '저장소(Repository) 전체 컨텍스트 기반 코드 이해·수정', openai: 3, claude: 5, copilot: 1, aicenter: 1 },
+              { no: 214, text: '기술 문서·주석·테스트 코드 자동 생성', openai: 4, claude: 5, copilot: 1, aicenter: 1 },
+              { no: 215, text: '보안 취약점(OWASP 등) 탐지 및 수정 제안', openai: 3, claude: 4, copilot: 1, aicenter: 1 },
+            ]
+          },
+          {
+            heading: '4-5. AI Agent Workflow (CLI·코드 환경)',
+            subtotal: { openai: '4.00', claude: '5.00', copilot: '1.00', aicenter: '1.50' },
+            items: [
+              { no: 217, text: 'Extended Thinking 기반 에이전트 복잡 추론·단계별 판단 근거 제공', openai: 4, claude: 5, copilot: 1, aicenter: 2 },
+              { no: 218, text: 'CLI·코드 환경 자율 에이전트 실행 지원', openai: 4, claude: 5, copilot: 1, aicenter: 1 },
+            ]
+          },
+        ]
+      },
+    };
+
+    function scoreBadge(v) {
+      const cls = v >= 4 ? 'cell-met' : v >= 3 ? 'cell-partial' : 'cell-not';
+      return `<span class="cell-badge ${cls}">${v}</span>`;
+    }
+
+    function buildCatModalHTML(data) {
+      return data.sections.map(sec => {
+        const rows = sec.items.map(it =>
+          `<tr>
+            <td class="col-no">#${it.no}</td>
+            <td>${it.text}</td>
+            <td class="col-score">${scoreBadge(it.openai)}</td>
+            <td class="col-score">${scoreBadge(it.claude)}</td>
+            <td class="col-score">${scoreBadge(it.copilot)}</td>
+            <td class="col-score">${scoreBadge(it.aicenter)}</td>
+          </tr>`
+        ).join('');
+
+        const subtotalRow = sec.subtotal
+          ? `<tr class="subtotal-row">
+              <td class="col-no">—</td>
+              <td><strong>소계</strong></td>
+              <td class="col-score">${sec.subtotal.openai}</td>
+              <td class="col-score">${sec.subtotal.claude}</td>
+              <td class="col-score">${sec.subtotal.copilot}</td>
+              <td class="col-score">${sec.subtotal.aicenter}</td>
+            </tr>`
+          : '';
+
+        return `<p class="cat-section-heading">${sec.heading}</p>
+          <table class="cat-detail-table">
+            <thead>
+              <tr>
+                <th class="col-no">#</th>
+                <th>평가항목</th>
+                <th class="col-score">OpenAI</th>
+                <th class="col-score">Claude</th>
+                <th class="col-score">Copilot</th>
+                <th class="col-score">AI포털</th>
+              </tr>
+            </thead>
+            <tbody>${rows}${subtotalRow}</tbody>
+          </table>`;
+      }).join('') +
+      `<table class="cat-detail-table" style="margin-top:16px;">
+        <tbody>
+          <tr class="total-row">
+            <td class="col-no" colspan="2"><strong>카테고리 평균</strong></td>
+            <td class="col-score">${data.total.openai}</td>
+            <td class="col-score">${data.total.claude}</td>
+            <td class="col-score">${data.total.copilot}</td>
+             <td class="col-score">${data.total.aicenter}</td>
+          </tr>
+        </tbody>
+      </table>`;
+    }
+
+    let _catModalCloseHandle = null;
+
+    function openCategoryModal(key) {
+      const data = CATEGORY_DATA[key];
+      if (!data) return;
+      if (_catModalCloseHandle) { _catModalCloseHandle.cancelled = true; _catModalCloseHandle = null; }
+      document.getElementById('cat-modal-title').textContent = data.title;
+      document.getElementById('cat-modal-body').innerHTML = buildCatModalHTML(data);
+      const modal = document.getElementById('cat-modal');
+      const overlay = document.getElementById('cat-modal-overlay');
+      modal.removeAttribute('hidden');
+      requestAnimationFrame(() => {
+        modal.classList.add('open');
+        overlay.classList.add('open');
+        overlay.setAttribute('aria-hidden', 'false');
+      });
+      document.getElementById('cat-modal-close').focus();
+    }
+
+    function closeCategoryModal() {
+      const modal = document.getElementById('cat-modal');
+      const overlay = document.getElementById('cat-modal-overlay');
+      if (!modal || modal.hasAttribute('hidden')) return;
+      modal.classList.remove('open');
+      overlay.classList.remove('open');
+      overlay.setAttribute('aria-hidden', 'true');
+      const handle = { cancelled: false };
+      _catModalCloseHandle = handle;
+      const hide = () => { if (!handle.cancelled) { modal.setAttribute('hidden', ''); } };
+      modal.addEventListener('transitionend', hide, { once: true });
+      setTimeout(hide, 350);
+    }
+
+    document.querySelectorAll('.category-clickable').forEach(el => {
+      el.addEventListener('click', () => openCategoryModal(el.dataset.category));
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCategoryModal(el.dataset.category); }
+      });
+    });
+    document.getElementById('cat-modal-close').addEventListener('click', closeCategoryModal);
+    document.getElementById('cat-modal-overlay').addEventListener('click', closeCategoryModal);
+
+    // ===== Smart Tooltip =====
+    (function () {
+      const TIP = document.getElementById('smart-tooltip');
+      const GAP = 10, ARROW = 6, MARGIN = 8;
+
+      function show(el) {
+        TIP.textContent = el.dataset.tooltip;
+        TIP.classList.remove('visible');
+        TIP.style.visibility = 'hidden';
+        TIP.dataset.placement = 'top';
+        TIP.setAttribute('aria-hidden', 'false');
+
+        const rect = el.getBoundingClientRect();
+        const tw = TIP.offsetWidth;
+        const th = TIP.offsetHeight;
+        const vw = window.innerWidth;
+
+        const placement = rect.top - th - GAP - ARROW >= 0 ? 'top' : 'bottom';
+        TIP.dataset.placement = placement;
+
+        const tipTop = placement === 'top'
+          ? rect.top - th - GAP - ARROW
+          : rect.bottom + GAP + ARROW;
+
+        let tipLeft = rect.left + rect.width / 2 - tw / 2;
+        tipLeft = Math.max(MARGIN, Math.min(tipLeft, vw - tw - MARGIN));
+
+        const arrowLeft = Math.max(16, Math.min(
+          rect.left + rect.width / 2 - tipLeft,
+          tw - 16
+        ));
+        TIP.style.setProperty('--arrow-left', arrowLeft + 'px');
+        TIP.style.left = tipLeft + 'px';
+        TIP.style.top  = tipTop  + 'px';
+        TIP.style.visibility = '';
+        TIP.classList.add('visible');
+      }
+
+      function hide() {
+        TIP.classList.remove('visible');
+        TIP.setAttribute('aria-hidden', 'true');
+      }
+
+      document.querySelectorAll('.has-tooltip[data-tooltip]').forEach(el => {
+        el.addEventListener('mouseenter', () => show(el));
+        el.addEventListener('mouseleave', hide);
+        el.addEventListener('focus',      () => show(el));
+        el.addEventListener('blur',       hide);
+      });
+    })();
+  </script>
+</body>
+</html>
